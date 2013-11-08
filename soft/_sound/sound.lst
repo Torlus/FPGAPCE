@@ -1,0 +1,141 @@
+#[1]   sound.asm
+    5                             
+    6           0000      START_BANK      .equ    0
+    7           0001      MAIN_BANK       .equ    START_BANK+1
+    8                     
+    9           E000              .code
+   10           0000              .bank START_BANK
+   11                     
+   12                         ; ----
+   13                         ; interrupt vectors
+   14                     
+   15           FFF6              .org  $FFF6
+   16                     
+   17  00:FFF6  24 E0             .dw _irq2
+   18  00:FFF8  25 E0             .dw _irq1
+   19  00:FFFA  26 E0             .dw _timer
+   20  00:FFFC  27 E0             .dw _nmi
+   21  00:FFFE  10 E0             .dw _reset
+   22                     
+   23           E010              .org  $E010
+   24  00:E010            _reset:
+   25  00:E010  78                sei                     ; disable interrupts 
+   26  00:E011  D8                cld                     ; clear the decimal flag 
+   27  00:E012  A2 FF             ldx   #$FF              ; initialize the stack pointer
+   28  00:E014  9A                txs 
+   29  00:E015  A9 FF             lda   #$FF              ; map the I/O bank in the first page
+   30  00:E017  53 01             tam   #0
+   31  00:E019  A9 F8             lda   #$F8              ; and the RAM bank in the second page
+   32  00:E01B  53 02             tam   #1
+   33                     
+   34                             map     main
+       00:E01D  A9 01              lda   #bank(main)        ; addressable memory
+       00:E01F  53 40              tam   #page(main)
+   35  00:E021  4C 00 C0          jmp main
+   36                     
+   37  00:E024            _irq2:
+   38  00:E024  40                rti
+   39  00:E025            _irq1:
+   40  00:E025  40                rti
+   41  00:E026            _timer:
+   42  00:E026  40                rti
+   43  00:E027            _nmi:
+   44  00:E027  40                rti
+   45                     
+   46           E028              .code
+   47           0001              .bank MAIN_BANK
+   48           C000              .org  $C000
+   49  01:C000            main:
+   50  01:C000  A9 FF             lda     #$FF
+   51  01:C002  8D 01 08          sta     $0801           ; Global sound balance
+   52                             
+   53  01:C005  A9 00             lda     #$00
+   54  01:C007  8D 00 08          sta     $0800           ; Channel select
+   55                             
+   56  01:C00A  A9 40             lda     #$40
+   57  01:C00C  8D 04 08          sta     $0804           ; ON=0 DDA=1
+   58  01:C00F  A9 00             lda #$00
+   59  01:C011  8D 04 08          sta     $0804           ; ON=0 DDA=0 (resets waveform index)
+   60                             
+   61  01:C014  A9 0E             lda     #$0E
+   62  01:C016  8D 06 08          sta     $0806
+   63  01:C019  A9 11             lda     #$11
+   64  01:C01B  8D 06 08          sta     $0806
+   65  01:C01E  A9 14             lda     #$14
+   66  01:C020  8D 06 08          sta     $0806
+   67  01:C023  A9 16             lda     #$16
+   68  01:C025  8D 06 08          sta     $0806
+   69  01:C028  A9 18             lda     #$18
+   70  01:C02A  8D 06 08          sta     $0806
+   71  01:C02D  A9 1A             lda     #$1A
+   72  01:C02F  8D 06 08          sta     $0806
+   73  01:C032  A9 1C             lda     #$1C
+   74  01:C034  8D 06 08          sta     $0806
+   75  01:C037  A9 1D             lda     #$1D
+   76  01:C039  8D 06 08          sta     $0806
+   77  01:C03C  A9 1D             lda     #$1D
+   78  01:C03E  8D 06 08          sta     $0806
+   79  01:C041  A9 1D             lda     #$1D
+   80  01:C043  8D 06 08          sta     $0806
+   81  01:C046  A9 1C             lda     #$1C
+   82  01:C048  8D 06 08          sta     $0806
+   83  01:C04B  A9 1A             lda     #$1A
+   84  01:C04D  8D 06 08          sta     $0806
+   85  01:C050  A9 18             lda     #$18
+   86  01:C052  8D 06 08          sta     $0806
+   87  01:C055  A9 16             lda     #$16
+   88  01:C057  8D 06 08          sta     $0806
+   89  01:C05A  A9 14             lda     #$14
+   90  01:C05C  8D 06 08          sta     $0806
+   91  01:C05F  A9 11             lda     #$11
+   92  01:C061  8D 06 08          sta     $0806
+   93  01:C064  A9 0E             lda     #$0E
+   94  01:C066  8D 06 08          sta     $0806
+   95  01:C069  A9 0B             lda     #$0B
+   96  01:C06B  8D 06 08          sta     $0806
+   97  01:C06E  A9 08             lda     #$08
+   98  01:C070  8D 06 08          sta     $0806
+   99  01:C073  A9 06             lda     #$06
+  100  01:C075  8D 06 08          sta     $0806
+  101  01:C078  A9 04             lda     #$04
+  102  01:C07A  8D 06 08          sta     $0806
+  103  01:C07D  A9 02             lda     #$02
+  104  01:C07F  8D 06 08          sta     $0806
+  105  01:C082  A9 01             lda     #$01
+  106  01:C084  8D 06 08          sta     $0806
+  107  01:C087  A9 00             lda     #$00
+  108  01:C089  8D 06 08          sta     $0806
+  109  01:C08C  A9 00             lda     #$00
+  110  01:C08E  8D 06 08          sta     $0806
+  111  01:C091  A9 00             lda     #$00
+  112  01:C093  8D 06 08          sta     $0806
+  113  01:C096  A9 01             lda     #$01
+  114  01:C098  8D 06 08          sta     $0806
+  115  01:C09B  A9 02             lda     #$02
+  116  01:C09D  8D 06 08          sta     $0806
+  117  01:C0A0  A9 04             lda     #$04
+  118  01:C0A2  8D 06 08          sta     $0806
+  119  01:C0A5  A9 06             lda     #$06
+  120  01:C0A7  8D 06 08          sta     $0806
+  121  01:C0AA  A9 08             lda     #$08
+  122  01:C0AC  8D 06 08          sta     $0806
+  123  01:C0AF  A9 0B             lda     #$0B
+  124  01:C0B1  8D 06 08          sta     $0806
+  125                             
+  126                             
+  127  01:C0B4  A9 FF             lda #$FF
+  128  01:C0B6  8D 05 08          sta $0805               ; Channel balance
+  129                             
+  130  01:C0B9  A9 00             lda #$00
+  131  01:C0BB  8D 03 08          sta     $0803
+  132  01:C0BE  A9 FE             lda #$FE
+  133  01:C0C0  8D 02 08          sta $0802               ; Frequency (440 Hz)
+  134                             
+  135  01:C0C3  A9 9F             lda #$9F
+  136  01:C0C5  8D 04 08          sta     $0804           ; ON=1 DDA=0 AL=$1F (starts output)
+  137                             
+  138                             
+  139  01:C0C8            endloop:
+  140                             ;vsync
+  141  01:C0C8  4C C8 C0          jmp     endloop
+  142                     

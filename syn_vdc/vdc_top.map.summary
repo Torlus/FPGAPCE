@@ -1,0 +1,14 @@
+Analysis & Synthesis Status : Successful - Sat Apr 09 07:04:36 2011
+Quartus II Version : 9.1 Build 222 10/21/2009 SJ Web Edition
+Revision Name : vdc_top
+Top-level Entity Name : vdc_top
+Family : Cyclone II
+Total logic elements : 4,615
+    Total combinational functions : 2,682
+    Dedicated logic registers : 2,557
+Total registers : 2557
+Total pins : 184
+Total virtual pins : 0
+Total memory bits : 53,504
+Embedded Multiplier 9-bit elements : 0
+Total PLLs : 1

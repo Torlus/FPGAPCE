@@ -1,0 +1,16 @@
+
+ -*[ MAGIC KIT v2.51 ]*-
+    -----------------
+
+
+    \MAGICKIT
+    |
+    |--\DOC
+        |
+        |--\NES         *.*             -- NES documentation
+        |
+        |--\PCE         *.*             -- PCE documentation
+
+
+--
+

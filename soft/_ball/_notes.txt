@@ -1,0 +1,30 @@
+13275 ns : Init RAM
+119  00:E021  73 00 20          tii   $2000,$2001,$1FFF
+
+6877134 ns : Fin init RAM
+  124  00:E028  9C 01 0C          stz   timer_ctrl        ; init timer
+
+Init Timer
+Init PSG
+
+6902824 ns : Init VDC
+  754  00:E571            init_vdc:
+6991901 ns : Init VCE
+  795  00:E592  9C 00 04           stz  color_ctrl
+7003211 ns : Clear VRAM
+  820  00:E5BE  23 00             st2   #0
+
+85356698 ns : Fin du clear VRAM
+       00:E5C6  A9 00              lda    LOW_BYTE #_xres
+
+85372615 ns : Retour init_vdc
+  127  00:E031  A9 1F             lda   #$1F              ; init joypad
+85403331 ns : Random Seed
+  169  00:E093  20 F8 E7          jsr   srand
+89517793 ns : Goto Main
+  195  00:E09A  4C 00 C0          jmp   main
+
+895412366 : Fin de set_write
+  580  00:E4FC  C2                cly
+
+

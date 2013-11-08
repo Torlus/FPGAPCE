@@ -1,0 +1,38 @@
+# DEVELO TOOLS MAKEFILE [MSDOS]
+#
+
+RM       = del
+CC       = gcc
+
+CFLAGS   = -O -Wall
+LIBDIR   = -L./LIB
+LIB      = -ldevel
+
+EXEDIR   = ../../bin
+EXECMX   = $(EXEDIR)/execmx.exe
+PERUN    = $(EXEDIR)/perun.exe
+GETROM   = $(EXEDIR)/getrom.exe
+TARGETS  = $(EXECMX) $(PERUN) $(GETROM)
+
+#
+#
+
+all: $(TARGETS)
+
+# CLEAN
+#
+clean:
+	$(RM) *.o
+	$(RM) ..\..\bin\execmx.exe
+	$(RM) ..\..\bin\perun.exe
+	$(RM) ..\..\bin\getrom.exe
+
+# EXE
+#
+$(EXECMX) : execmx.c lib/libdevel.a
+	$(CC) $(CFLAGS) -s -o $(EXECMX) execmx.c $(LIBDIR) $(LIB)
+$(PERUN)  : perun.c  lib/libdevel.a
+	$(CC) $(CFLAGS) -s -o $(PERUN)  perun.c  $(LIBDIR) $(LIB)
+$(GETROM) : getrom.c lib/libdevel.a
+	$(CC) $(CFLAGS) -s -o $(GETROM) getrom.c $(LIBDIR) $(LIB)
+

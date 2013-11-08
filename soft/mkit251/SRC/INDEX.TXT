@@ -1,0 +1,18 @@
+
+ -*[ MAGIC KIT v2.51 ]*-
+    -----------------
+
+
+    \MAGICKIT
+    |
+    |--\SRC
+        |
+        |--\AS          *.*             -- Assembler source code
+        |
+        |--\DEVELO      *.*             -- PC-Engine Develo utilities
+            |
+            |--\LIB     *.*             -- PC-Engine Develo library
+
+
+--
+

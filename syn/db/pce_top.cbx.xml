@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<LOG_ROOT>
+	<PROJECT NAME="pce_top">
+		<CBX_INST_ENTRY INSTANCE_NAME="|pce_top|huc6260:VCE|colram:ram|altsyncram:altsyncram_component" CBX_FILE_NAME="altsyncram_9q72.tdf"/>
+		<CBX_INST_ENTRY INSTANCE_NAME="|pce_top|huc6260:VCE|scanline:sl1|altsyncram:altsyncram_component|altsyncram_0go1:auto_generated|altsyncram:ram_block1a0" CBX_FILE_NAME="altsyncram_ce73.tdf"/>
+		<CBX_INST_ENTRY INSTANCE_NAME="|pce_top|huc6270:VDC|linebuf:bg_buf|altsyncram:altsyncram_component" CBX_FILE_NAME="altsyncram_5l52.tdf"/>
+		<CBX_INST_ENTRY INSTANCE_NAME="|pce_top|ram:RAM|altsyncram:altsyncram_component" CBX_FILE_NAME="altsyncram_u7a1.tdf"/>
+		<CBX_INST_ENTRY INSTANCE_NAME="|pce_top|huc6260:VCE|scanline:sl0|altsyncram:altsyncram_component|altsyncram_0go1:auto_generated|altsyncram:ram_block1a0" CBX_FILE_NAME="altsyncram_ce73.tdf"/>
+		<CBX_INST_ENTRY INSTANCE_NAME="|pce_top|huc6260:VCE|scanline:sl1|altsyncram:altsyncram_component" CBX_FILE_NAME="altsyncram_0go1.tdf"/>
+		<CBX_INST_ENTRY INSTANCE_NAME="|pce_top|huc6260:VCE|scanline:sl0|altsyncram:altsyncram_component" CBX_FILE_NAME="altsyncram_0go1.tdf"/>
+		<CBX_INST_ENTRY INSTANCE_NAME="|pce_top|huc6270:VDC|satram:sat|altsyncram:altsyncram_component" CBX_FILE_NAME="altsyncram_0oq1.tdf"/>
+		<CBX_INST_ENTRY INSTANCE_NAME="|pce_top|huc6280:CPU|psg:PSG|voltab:VT|altsyncram:altsyncram_component" CBX_FILE_NAME="altsyncram_1r71.tdf"/>
+	</PROJECT>
+</LOG_ROOT>

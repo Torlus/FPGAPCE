@@ -1,0 +1,66 @@
+--------------------------------------------------------------------------------------
+Timing Analyzer Summary
+--------------------------------------------------------------------------------------
+
+Type           : Worst-case tsu
+Slack          : N/A
+Required Time  : None
+Actual Time    : 8.404 ns
+From           : SRAM_DQ[10]
+To             : huc6270:VDC|BG_RAM_DO[10]
+From Clock     : --
+To Clock       : CLOCK_24[0]
+Failed Paths   : 0
+
+Type           : Worst-case tco
+Slack          : N/A
+Required Time  : None
+Actual Time    : 9.153 ns
+From           : RESET_N
+To             : SRAM_ADDR[3]
+From Clock     : CLOCK_24[0]
+To Clock       : --
+Failed Paths   : 0
+
+Type           : Worst-case th
+Slack          : N/A
+Required Time  : None
+Actual Time    : -2.971 ns
+From           : SW[0]
+To             : INI_FL_ADDR[21]
+From Clock     : --
+To Clock       : CLOCK_24[0]
+Failed Paths   : 0
+
+Type           : Clock Setup: 'pll:pll|altpll:altpll_component|_clk0'
+Slack          : 9.269 ns
+Required Time  : 42.86 MHz ( period = 23.332 ns )
+Actual Time    : 71.11 MHz ( period = 14.063 ns )
+From           : huc6270:VDC|X[1]
+To             : huc6270:VDC|REN_SP_OPQ[14]
+From Clock     : pll:pll|altpll:altpll_component|_clk0
+To Clock       : pll:pll|altpll:altpll_component|_clk0
+Failed Paths   : 0
+
+Type           : Clock Hold: 'pll:pll|altpll:altpll_component|_clk0'
+Slack          : 0.445 ns
+Required Time  : 42.86 MHz ( period = 23.332 ns )
+Actual Time    : N/A
+From           : huc6260:VCE|VGA_HS_N_FF
+To             : huc6260:VCE|VGA_HS_N_FF
+From Clock     : pll:pll|altpll:altpll_component|_clk0
+To Clock       : pll:pll|altpll:altpll_component|_clk0
+Failed Paths   : 0
+
+Type           : Total number of failed paths
+Slack          : 
+Required Time  : 
+Actual Time    : 
+From           : 
+To             : 
+From Clock     : 
+To Clock       : 
+Failed Paths   : 0
+
+--------------------------------------------------------------------------------------
+

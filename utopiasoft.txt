@@ -1,0 +1,13 @@
+<CharlesM> Mednafen is open source, as is the MESS emuation in MESS
+<CharlesM> But they emulate other stuff so source could be rather complex to go through
+<CharlesM> I wrote TGEmu which is open source, as is Dave's tgsim
+
+http://www.archaicpixels.com
+
+<CharlesM> Torlus: http://cgfm2.emuviews.com/txt/hutech.txt
+
+<CharlesM> http://www.webalice.it/cicciopetito/us_patents.html
+<CharlesM> use www.pat2pdf.com to get pdfs from those numbers if you want
+<CharlesM> http://www.webalice.it/cicciopetito/jp_patents.html
+<CharlesM> the JP patents also cover similar (but not identical) hardware one of the engineers made when working for Seiko-Epson
+<CharlesM> but it's still good reference material

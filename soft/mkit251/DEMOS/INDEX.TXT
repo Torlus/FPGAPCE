@@ -1,0 +1,16 @@
+
+ -*[ MAGIC KIT v2.51 ]*-
+    -----------------
+
+
+    \MAGICKIT
+    |
+    |--\DEMOS
+       |
+       |--\NES          *.*             -- NES demos
+       |
+       |--\PCE          *.*             -- PC-Engine demos
+
+
+--
+

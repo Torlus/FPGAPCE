@@ -1,0 +1,45 @@
+
+ -*[ MAGIC KIT v2.51 ]*-
+    -----------------
+
+
+    \MAGICKIT
+    |
+    |--\DEMOS
+       |
+       |--\PCE
+          |
+          |--\BALL      BALL.ASM        -- A small ball that bounces on the
+          |             BALL.PCE           bottom of the screen
+          |             BALL.PCX
+          |
+          |--\GAMELIFE  GAMELIFE.ASM    -- Conway's Game of Life demo
+          |             GAMELIFE.PCE
+          |
+          |--\MML       MML.ASM         -- Musical demo to demonstrate
+          |             MML.PCE            MML usage
+          |
+          |--\SAMPLES   SAMPLE1.ASM     -- Misc samples showing how to display
+          |             SAMPLE2.ASM        CG characters
+          |             SAMPLE1.PCE
+          |             SAMPLE2.PCE
+          |
+          |--\SLIDSHOW  SLIDSHOW.ASM    -- A little slideshow with artwork from
+          |             SLIDSHOW.PCE       Dave's upcoming Tetris game!
+          |             TETRIS1.PCX        Graphics done by dil
+          |             TETRIS2.PCX
+          |             TETRIS3.PCX
+          |             TETRIS4.PCX
+          |
+          |--\STARWAVE  DEMO.ASM        -- A mini demo with a wavy background,
+          |             SIN.INC            a few sprites, and a scroll text
+          |             DEMO.PCE
+          |             BLOCK.PCX
+          |
+          |--\WALKER    WALKER.ASM      -- A sprite walking on the screen
+                        WALKER.PCE
+                        WALKER5.PCX
+
+
+--
+

@@ -1,0 +1,483 @@
+================================================================================
+Janvier 2011
+================================================================================
+En Janvier 2010, j'ai commencé le projet Megadrive/Genesis dans un FPGA.
+Au bout de quelques mois, j'ai fini par obtenir des résultats intéressants.
+Ce projet n'est pas fini, mais bon, en attendant une opportunité de le faire, autant commencer autre chose. :)
+
+Ca fait maintenant plus d'un an que je "traine" sur #utopiasoft, un canal IRC de passionnés/programmeurs sur PC-Engine.
+C'est une console que j'affectionne particulièrement, plus que la Megadrive, même si elle a eu un succès plus confidentiel.
+Même si elle est en théorie moins puissante, il y a beaucoup plus de difficultés à résoudre que pour la Megadrive.
+Parmi ces difficultés, les majeures qui me viennent à l'esprit :
+- Elle utilise des composants spécifiques, dont le CPU (HuC6280, un 65C02 lourdement modifié).
+- La documentation à son sujet est mince (en tout cas, en anglais).
+- L'émulateur de "référence", MagicEngine, est propriétaire.
+
+Cependant, il y a aussi des points positifs :
+- Une communauté restreinte, mais active.
+- Des émulateurs open-source, comme TGEmu et Hu-Go! de bonne qualité.
+
+Et surtout, je ne vois pas en quoi ce serait irréalisable, donc allons-y!
+
+Je sais qu'un Japonais qui fréquente parfois #utopiasoft a le même projet, mais il y a plusieurs points qui me gênent.
+En effet, ça fait assez longtemps qu'il travaille sur le sujet, et il n'y a pas grand-chose de concret.
+De ce que j'ai compris, il a potentiellement un HuC6280 fonctionnel, mais ce n'est pas garanti.
+De plus, il a commencé à travailler sur le sujet il y a plus de 5 ans, et n'a à priori que peu de temps libre à y consacrer.
+Je n'ai pas beaucoup de temps libre non plus, mais je pense pouvoir obtenir des résultats plus rapidement.
+Et je ne me sens pas capable de retenir mon "attention" sur une aussi longue période, bref, je veux obtenir du concret, même imparfait, dans quelques mois au plus.
+
+Je décide de m'attaquer au CPU, le HuC6280.
+En fait ce chip contient un CPU, une MMU, un timer et un générateur sonore, mais je m'intéresse d'abord à l'aspect CPU.
+
+Je commence donc à collecter des infos, ce qui donne:
+- Un wiki géré par Gravis : http://www.archaicpixels.com/ qui contient notamment l'analyse du jeu d'instructions du HuC6280.
+- Des sources d'émulateurs, TGEmu de Charles MacDonald et Hu-Go! de Zeograd.
+- Diverses documentations sur le 6502 et 65C02.
+- Un kit de développement en assembleur, le MagicKit.
+
+Je commence donc à étudier le HuC6280.
+A première vue, c'est juste un 65C02 avec quelques instructions supplémentaires.
+Pour ne pas partir de zéro concernant le CPU, je m'oriente vers les cores de 6502 existant.
+Mon premier choix se porte sur le T65, le plus connu, cependant je regarde aussi du côté du projet FPGA64 : http://www.syntiac.com/fpga64.html
+J'hésite un peu entre les deux, pour les raisons suivantes :
+- Le T65 a une license permissive, mais son design ne me semble pas très clair.
+- Le core du projet FPGA64 a une license restrictive, mais son design est limpide.
+Après quelque temps à étudier à la fois le HuC6280 et ces 2 cores de 6502, j'en viens à me dire que celui du FPGA64 serait nettement mieux adapté.
+Je contacte donc ses auteurs en leur expliquant mon projet, et ils ont été très réceptifs.
+J'ai donc l'autorisation d'utiliser leur core 6502, ce qui va m'être très utile.
+
+En effet, contrairement à ce que je pensais au début, le HuC6280 n'est pas simplement un 65(C)02 auquel on aurait rajouté quelques instructions.
+Il y a des modes d'adressage supplémentaires, et notamment le flag T, qui une fois activé, permet de modifier le mode d'adressage de l'instruction suivante (!)
+Le travail sur le core du CPU risque de prendre un certain temps...
+
+Je monte donc rapidement un projet en simulation (ROM/RAM/CPU) et je commence à me familiariser avec MagicKit et notamment l'assembleur PCEAS.
+Hormis la syntaxe particulière de l'assembleur, je découvre après quelque temps que malgré l'option de génération en ligne de commande d'un fichier listing,
+celui-ci n'est généré que si une directive ".list" est ajoutée dans le code source (!)
+Après avoir généré une première ROM de test, je la fais tourner en simulation, et là je constate quelque chose de bizarre.
+En effet, les vecteurs NMI et RESET sont inversés par rapport à un 6502!
+Rien de grave, je modifie le core FPGA64 et j'en profite d'ailleurs pour implémenter les instructions CSH et CSL du HuC6280.
+J'y ajoute aussi les registres MPR de la MMU.
+Le design "par table" de ce core est un vrai bonheur, toutes les parties sont bien distinctes.
+En gros, en positionnant correctement les flags pour chaque instruction dans la table d'instructions, on arrive à ses fins.
+Il ne reste juste qu'à vérifier/modifier les différentes machines à état : prochain cycle, prochaine adresse, etc.
+L'intérêt de ce design c'est que les "effets de bord" sont quasi-nuls, car il n'y a quasi aucune dépendance entre les différents blocs fonctionnels.
+J'arrive par exemple avec une facilité qui me surprend à rajouter un des modes d'adressages manquants, en définissant une simple constante avec les flags existants!
+
+Cependant, à la lumière d'une discussion sur #utopiasoft, je découvre une autre "subtilité".
+Les timings du HuC6280 et du 65C02 sont assez différents (avec un net avantage au 65C02).
+Ce qui veut dire qu'il va falloir que je vérifie le timing de toutes les instructions, au lieu de celles rajoutées...
+Heureusement, Charles MacDonald vient une fois de plus à mon secours, avec un document détaillant les timings dans tous les modes d'adressage.
+Il faudra donc que j'adapte la machine à états principale, mais grâce au design du soft-core et cette documentation, cela ne devrait pas être trop douloureux.
+Cela sera cependant un travail de longue haleine, à n'en pas douter...
+Pour réaliser ce travail, je me base sur :
+- http://www.archaicpixels.com/index.php/HuC6280_Instruction_Set
+- http://www.obelisk.demon.co.uk/65C02/reference.html
+- Les sources de Hu-Go!
+- Le document "hutech.txt" de Charles MacDonald
+Dans l'ordre je compte réaliser les tâches suivantes :
+- Ajouter les modes d'adressages manquants communs au 65C02 et au HuC6280.
+- Ajouter les instructions manquantes, spécifiques au HuC6280.
+- Ajouter les modes d'adressage induits par le flag T, et modifier la machine à états principale pour obtenir les bons timings.
+- Etudier et implémenter la gestion des interruptions.
+
+Les modes supplémentaires d'adressage n'ont pas été compliqués à rajouter.
+Cependant, en faisant cela, je me suis rendu compte que la modification de la machine à états principale risquait de demander un peu de rigueur.
+En effet, les timings sont assez différents : les instructions prennent en général plus de cycles, mais le nombre de cas de figure est plus réduit.
+Il n'y a par exemple pas de cycle de pénalité lors du franchissement d'une page, comme sur le 6502.
+Je me dis donc qu'avant de rajouter les instructions spécifiques, il serait judicieux de partir sur de bonnes bases en ce qui concerne l'existant.
+J'apporte donc les modifications nécessaires et j'obtiens une machine à états principale qui est au final plus simple.
+Ceci ne s'est pas fait sans tomber dans quelques pièges, mais cela m'a permis de me conforter dans l'idée que j'avais bien fait de prendre comme base le core du FPGA64.
+Je n'ose imaginer le temps qu'il m'aurait fallu si j'étais parti du T65 par exemple (ou d'une feuille blanche).
+
+================================================================================
+Fevrier 2011
+================================================================================
+L'écriture du CPU avance bien, j'ai ajouté l'ensemble des instructions manquantes, hormis les "block transfers".
+J'ai découvert à cette occasion un nombre de "subtilités" du 6502 et 65C02, dont certaines sont décrites ici :
+- http://en.wikipedia.org/wiki/Interrupts_in_65xx_processors
+Entre autres :
+- L'instruction BRK est considérée comme une instruction de 2 octets.
+- Il y a un bug sur la gestion du flag D sur le 6502, corrigé dans le 65C02.
+J'ai en outre demandé quelques explications sur la gestion des IRQs aux auteurs du FPGA64 (Peter et Jens).
+J'ai reçu une explication très détaillée sur celle-ci, qui m'a permis de lever la grande majorité des doutes restants à ce sujet.
+Il me reste principalement une série de tests à faire sur cette partie, pour valider son fonctionnement.
+
+J'implémente donc toutes les instructions, y compris celles de "block transfer" qui nécessitent une portion dédiée de la machine à états.
+Je prend aussi en compte toutes les remarques (enfin j'espère) des docs "hutech.txt" et "pcetech.txt".
+Je pense en avoir fini avec le CPU, et je commence à regarder l'interfaçage avec les chips externes.
+Première surprise, il y a un Read Strobe et Write Strobe séparés (!)
+A la lumière de ceci je comprends un peu mieux certaines remarques sur la doc "hutech.txt".
+J'ajoute donc la gestion du Read Strobe, et effectivement il semble nécessaire pour éviter par exemple des "double lectures" sur les registres du VDC.
+Je pense avoir traité correctement cette partie, à un petit bémol près : quelques Read Strobes "parasites" sur le "cycle2" du CPU.
+Ceux-ci ne devraient pas être génants, ils correspondent à une lecture à PC+1, ce qui ne devrait arriver qu'en ROM et RAM.
+Néanmoins, il faudra être prudent sur cette partie-là, car je n'ai pas retesté l'ensemble des instructions pour m'assurer de ne rien avoir loupé.
+
+Pour me changer un peu les idées, je m'intéresse un peu à Mednafen : http://mednafen.sourceforge.net/
+Gravis m'a en effet indiqué qu'il était capable de faire tourner la quasi-intégralité des jeux PCE.
+De plus, contrairement à tgemu et Hu-Go! il est en développement actif.
+Il a malheureusement quelques désavantages... Pour résumer, c'est un assemblage improbable de sources d'émulateurs de provenances variées,
+reposant sur un nombre assez conséquent de bibliothèques tierces. Cependant, l'émulation PCE est "custom" et d'une relative lisibilité.
+Cela pourra m'être utile, si je veux me constituer des outils tels "VDP Replay" qui m'avaient bien été utiles pour le projet Megadrive.
+Je me lance donc dans sa recompilation sous Windows avec MinGW.
+Après quelques tâtonnements, cela finit par compiler (et marcher !), j'avoue que je m'attendais à pire...
+
+J'attaque donc l'implémentation des périphériques "on-chip" du HuC620 : Timer, Interrupt Controller, I/O Port.
+Je laisserai de côté le PSG pour le moment à priori, sauf s'il s'avérait vital dans l'exécution du code.
+
+Pour le PSG, les doutes sont vite levés : ses registres sont "write-only" et il ne génère pas d'interruption.
+Pour le reste, cela reste assez simple.
+Il existe cependant parfois des différences entre les implémentatons des différents émulateurs.
+Une longue discussion avec Charles MacDonald me permet de lever la plupart des doutes à ce sujet.
+
+Même si je n'ai encore rien concernant le VDC ou le VCE, je commence à envisager la possibilité de faire tourner quelque chose sur ma carte DE1.
+Dans ce but, je "recycle" ce que j'ai déjà fait pour la Megadrive, et je me constitue un design adapté au hardware de la DE1.
+Et là, je remarque quelque chose... Le temps de simulation lorsque l'horloge vient d'une PLL me semble long comparé à ce que j'ai rencontré avec un signal d'horloge "direct".
+Pour m'en assurer je retire provisoirement la PLL de mon design pour la simulation, adapte l'horloge en simulation, et le résultat me laisse bouche bée!!!
+Je n'ai pas mesuré précisément la différence, mais c'est le jour et la nuit! La simulation est extrêmement plus rapide. Il faut croire que la simulation d'une PLL est très coûteuse...
+Ca me fait un peu enrager quand je pense au temps perdu lors des simulations sur le projet Megadrive, mais bon au final, je me réjouis quand même de cette découverte.
+L'étape à venir (l'implémentation du VDC et d'un design de test similaire à VDP-Replay) sera de ce fait nettement moins coûteuse en temps.
+
+Je commence à étudier le VCE et le VDC, et surtout j'essaie de comprendre les interactions de l'un avec l'autre.
+Il faut avouer que ce n'est pas très clair avec les informations récupérées jusqu'alors.
+Apparemment, le VDC réalise un comptage vidéo basé uniquement sur des valeurs de registres et sur l'horloge fournie par le VCE, mais c'est le VCE qui génère le signal vidéo.
+Mais de cette manière cela me semble assez hasardeux : une configuration erronée des registres pourrait générer un signal vidéo complêtement inapproprié.
+Une fois de plus, Charles MacDonald vient à mon secours, en me donnant ce lien : http://www.webalice.it/cicciopetito/us_patents.html
+Il s'agit de la liste des brevets déposés par Hudson concernant la PCE. Avec le site http://www.pat2pdf.org/ il est possible de les récupérer, ce que je fais.
+Et là, à la lecture de ces brevets, voici ce que je découvre :
+- Le VCE génère des signaux HSYNC et VSYNC.
+- Le VDC peut soit générer ces signaux lui-même, soit les accepter en tant qu'entrées.
+Vu que le VCE génère entre autres un signal vidéo composite, il semble impensable que ce ne soit pas lui qui soit "maître" dans la génération de la synchro.
+Je fais confirmer ce point par Charles, et effectivement voici ce qu'il ressort :
+- Le VCE posséde son propre comptage vidéo, qui génère des signaux de synchro à la norme NTSC.
+- Le VDC possède aussi son propre comptage vidéo basé sur ses propres registres, mais celui-ci se "réajuste" en se basant sur la synchro du VCE.
+- Il existe un cas d'utilisation du VDC sans VCE : le jeu d'arcade "Bloody Wolf" où le VDC est resposable de la synchro. Ce n'est pas le cas de la PCE.
+A la lumière de ces explications, le design de la partie vidéo semble clair.
+Je peux donc attaquer sereinement l'écriture du VCE.
+
+================================================================================
+Mars 2011
+================================================================================
+Le VCE est relativement simple à écrire. L'interface CPU est simple, et le comptage vidéo est "fixe".
+Il y a juste un flag "262 lignes/263 lignes" qui à mon avis sert à gérer des images entrelacées.
+J'inclus directement dans le VCE un scandoubleur pour réaliser une sortie VGA depuis la carte DE1.
+Je teste rapidement l'ensemble en simulation, et tout me semble correct.
+
+J'attaque donc l'analyse du VDC, en me basant sur pcetech.txt, les brevets et les sources de TGEmu et Mednafen.
+Ce que j'en retiens :
+- Le système est 16-bit (registres et accès mémoire), ce qui ne posera pas de problème vu que la SRAM l'est aussi.
+- Les tiles et sprites sont stockés en mode "planar" (à opposer au mode "chunky").
+- Il y a un unique plan de background, scrollable en X et Y dans son intégralité (pas de scroll par ligne/colonne).
+- Les sprites sont au nombre de 64, dont 16 par scanline.
+  Apres discussion avec Charles, le sprite engine gère 16 buffers de 16 pixels pour les sprites.
+  Donc un sprite de 32 pixels de largeur occupe 2 sprite buffers.
+- Les sprites gèrent le flip horizontal et vertical, et un flag de priorité par rapport au background.
+  La priorité des sprites entre eux est déterminée par leur ordre dans la SAT (pas de liste chainée comme pour la Megadrive).
+- Le rechargement des différents registres ou tables (comme la SAT) n'est effectué qu'à certains moments précis.
+- Il existe du DMA, mais seulement "interne" (VRAM->VRAM ou VRAM->SAT), et un mode "burst" désactivant le rendu pour accélérer les accès mémoire (DMA/CPU).
+
+Pour résumer, le VDC me semble bien plus abordable que le VDP de la Megadrive, et moins sensible aux problème de timings.
+Ce qui cependant me semble important à respecter est la gestion de "slots" d'accès à la VRAM.
+Ces "slots" sont configurables par registres et conditionnent les périodes d'accès du CPU/VDC à la VRAM.
+Ils peuvent être configurés pour obliger le VDC à ne récupérer que certains plans et donc créer des effets graphiques.
+
+Je me lance donc dans l'écriture de la partie "rendu" du VDC.
+L'idée étant qu'à partir d'un contenu préchargé de VRAM, SAT et registres, je sois en mesure de générer la sortie vidéo.
+Je ne sais pas encore si je me contenterai d'une validation en simulation, ou si j'irai jusqu'à la synthèse, à voir.
+
+Dans un premier temps, je commence à écrire une implémentation software (mais orientée hardware).
+A cet effet, je patche Mednafen afin de générer à la sauvegarde d'un "save state" le contenu du VDC/VCE ainsi qu'un screenshot en BMP.
+J'ai voulu dans un premier temps essayer d'utiliser le format de "save state" de Mednafen, mais j'ai abandonné l'idée.
+Mednafen est sans aucun doute réalisé par quelqu'un de talentueux, mais de mon point de vue c'est aussi un sacré bazar...
+
+Ensuite j'écris un programme nommé "pceren", dans le même esprit que "genren" qui m'avait été très utile pour la Megadrive.
+Pour mes premiers tests, je décide de prendre l'écran de titre de "The Kung-Fu" qui est (sauf erreur de ma part), l'un des tous premiers titres de la PCE.
+C'est un jeu qui reprend le gameplay de "Kung-Fu Master", et qui servait un peu de "démo technique" de ce dont était capable la PCE.
+Par rapport à son ancètre, on trouve ici un scrolling fluide avec effet de parallaxe, des sprites énormes et colorés.
+Je suis bien inspiré d'avoir choisi ce jeu, car l'écran de titre est statique, et utilise des sprites.
+Après quelques tâtonnements, je finis par mettre au point "pceren".
+Même si je suis loin d'avoir testé tous les cas de figure, je pense que je dispose maintenant d'une bonne base de travail.
+Prochaine étape, donc, réaliser l'implémentation en hardware...
+
+J'écris donc une partie du VDC, composée des composants suivants :
+- Un contrôleur d'accès à la SRAM, "asynchrone", dans l'esprit de ce que j'ai fait sur la Megadrive.
+- Une partie comptage/scheduling, qui se cale sur le VCE, et attribue des périodes d'exécution aux autres composants.
+- Le "background engine", séparé en 2 parties : une première partie réalise les calculs et les accès mémoire, en respectant la logique de "slots d'accès" du design original.
+  La deuxième partie remplit un "line buffer" avec les pixels du background.
+- Le "line renderer" qui mixera ce qui sera généré par le futur "sprite engine" et le "line buffer".
+  Pour le moment, il ne fait que restituer le "line buffer" (en l'effaçant après utilisation).
+Je teste le tout en simulation, et cela semble OK.
+Je prépare alors ce design pour une exécution sur le hardware, en incluant une phase de lecture de la VRAM depuis la Flash et transfert en SRAM.
+Le contenu de la flash, certains registres du VDC, ainsi que la "color table" du VCE sont générés avec "pceren".
+Le contenu du VCE sera intégré directement dans le design, à l'aide d'un .mif (Memory Init File).
+Les registres sont valorisés directement dans le code, car je ne dispose pas encore de l'interface CPU.
+J'en profite pour faire générer par le design en simulation un fichier de sortie vidéo.
+J'adapte le programme "vdp2bmp" (renommé "vid2bmp") que j'avais fait pour le projet Megadrive, afin de générer des fichiers .bmp correspondant à chaque frame générée par le système.
+J'obtiens donc bien en simulation le background de l'écran de titre de The Kung Fu.
+Je synthétise l'ensemble, notamment pour voir si je respecte les contraintes de timing, ce qui semble largement être le cas.
+Reste à tester tout ceci sur le hardware...
+
+Le test sur le hardware est encourageant, mais pas parfait...
+En effet, la partie droite de l'affichage oscille verticalement (!)
+Je pense tout de suite que ça vient de problèmes d'accès mémoire, et j'insère des waitstates un peu partout, mais rien n'y fait...
+Un peu perplexe, je relance la simulation sur plusieurs frames et je finis par observer grâce à "vid2bmp" un phénomène étrange.
+En effet, une frame sur deux, il manque une partie de la dernière scanline (!)
+Cela me rassure, car à priori ça expliquerait bien ce phénomène, et surtout, c'est reproductible en simulation.
+Et effectivement, le comptage vidéo générait 1/2 scanline toutes les 2 frames...
+Je corrige cela, et tout rentre dans l'ordre. J'ajuste les périodes de blanking pour obtenir un affichage qui ne soit pas tronqué.
+En conclusion, pour un premier test sur le hardware, c'est assez encourageant.
+
+J'enchaîne donc avec l'écriture du "sprite engine". Celui-ci se compose de 3 parties :
+- Une première partie, active pendant la scanline précédente, lit la SAT pour y remplir un maximum de "pre-buffers".
+  Aucun accès à la VRAM n'est effectué. La détection de l'overflow se déroule pendant cette phase.
+- Une deuxième partie va utiliser les informations de ces "pre-buffers" pour aller chercher en VRAM les bitplanes correspondants.
+  J'ai géré approximativement la logique des slots d'accès (comparable à celle du "background engine").
+  En effet, le timing global est respecté, par contre l'entrelacement des accès n'est pas reproduit.
+  Exemple avec le "dot width" à zéro, les accès sur 16 pixels devraient être les suivants :
+  S0 S1 S2 S3 S0 S1 S2 S3 S0 S1 S2 S3 S0 S1 S2 S3
+  Alors que je réalise en réalité :
+  S0 S0 S0 S0 S1 S1 S1 S1 S2 S2 S2 S2 S3 S3 S3 S3 
+  Cela ne devrait pas poser de souci, à part de potentiels artefacts dans des cas aux limites.
+- La troisième partie est intégrée au "line renderer" et gère la sélection du sprite à afficher (ou pas).
+  Elle réalise aussi la détection de collision avec le sprite #0.
+Le "line renderer" a été modifié pour gérer les priorités background/sprites.
+Après un peu de debug, l'ensemble fonctionne en simulation, et du premier coup sur le hardware!
+
+C'est l'occasion d'immortaliser cette étape avec une photo : http://heliscar.com/greg/PCEvdc1.jpg
+
+Globalement, il reste beaucoup de choses non testées dans mon implémentation du VDC, mais je pense que c'est un bon début.
+S'il reste des bugs d'affichage, ceux-ci devraient pouvoir se résoudre relativement facilement avec l'aide de "pceren".
+Cela permet de cloturer le mois de Mars sur une étape significative, avant d'attaquer la suite.
+La suite consiste dans un premier temps en l'implémentation de l'interface CPU, des interruptions, et des transferts DMA.
+Ensuite, il ne restera en gros qu'à relier les composants entre eux, et prier pour que ça marche :)
+
+================================================================================
+Avril 2011
+================================================================================
+L'écriture de ce qui reste au niveau du VDC ne pose pas de problème particulier.
+Je fais à l'occasion la connaissance de quelques fonctionnalités telles le Burst Mode, ou l'Auto SATB DMA :)
+Je teste grossièrement quelques fonctionnalités et ça a l'air OK.
+
+Vient donc le moment de connecter l'ensemble... Je reprends donc ce que j'avais laissé de côté, et prépare un projet complet.
+Je rajoute un peu de logique supplémentaire au niveau de la Flash, pour permettre de mieux gérer les temps d'accès.
+J'en profite pour rajouter une petite fonctionnalié : l'ajout de 512 à l'adresse générée dans l'espace d'adressage de la ROM.
+Cette fonction sera activable à l'aide d'un switch de la carte, et permettra sans manipulation préalable de flasher directement les ROMs qu'on trouve sur le net.
+En effet, la plupart contiennent un header de 512 octets (qui en général n'est pas utilisé par les émulateurs).
+
+Une fois cette partie faite, je lance en simulation l'execution de l'exemple "BALL" de Magic Kit.
+Bien évidemment ça ne marche pas :) Je dois dire que je m'y attendais, ça aurait été trop beau...
+Qu'importe, je recompile l'exemple en activant le listing complet (je rajoute ".list" au début de STARTUP.ASM), et je lance la simulation.
+Je trouve déjà un bug du CPU sur les instructions Txx, que je corrige rapidement.
+Et c'est parti pour de longues heures de simulation, écueil inévitable je crois de ce genre de projet... :)
+
+Après quelques séances de simulation, je corrige quelques bugs dans le contrôleur mémoire du VDC.
+Je corrige aussi un bug un peu vicieux dans l'interface CPU du VDC, et j'arrive en simulation à faire tourner BALL.
+Me voici donc prêt à tester ça sur le hardware...
+Et là, surprise désagréable, ça ne fonctionne pas du tout, alors que les timings sont OK selon Quartus.
+Je fais quelques tentatives, du genre "assouplir" le contrôleur SRAM du VDC, mais rien de probant.
+J'en viens à soupçonner deux éléments :
+- L'accès à la Flash. En effet, la Flash est le composant dont les temps d'accès sont les plus élevés (70-90ns).
+- La logique de Reset, qui mériterait un peu de "debounce" probablement.
+Je modifie les deux, et après quelques tâtonnements, j'arrive enfin à un design stable!
+BALL fonctionne parfaitement (bon en même temps ce n'est pas un programme d'une énorme complexité).
+Je teste donc deux autres ROMs commerciales : "The Kung Fu" et "Bomberman'94".
+The Kung Fu fonctionne plutôt bien (je laisse tourner le mode démo). 
+J'observe quelques glitches dans le scrolling, mais c'est peut-être lié à mes modifications du contrôleur SRAM.
+Bomberman'94 présente nettement plus de glitches graphiques, mais semble néanmoins fonctionner normalement.
+Mes I/Os sont mappées n'importe comment, mais j'arrive à démarrer un partie quand même.
+A priori il y a (entre autres) des problèmes dans la gestion des registres de scrolling, car le background et les sprites sont décalés.
+
+En tout cas, après un peu plus de trois mois de travail, c'est quand même un résultat satisfaisant!
+A l'aide des outils que j'ai développés (tels pceren), je pense être en mesure de corriger la plupart des bugs du VDC.
+Reste à espérer qu'il n'y ait pas trop de bugs liés au CPU, car ce pourraît être plus délicat à traquer.
+Mais maintenant que le cap du passage de la simulation au hardware est franchi, ce qui reste n'est plus qu'une question de patience.
+
+Ca mérite bien une petite vidéo :) http://www.youtube.com/watch?v=gVt4fZFnMpw
+
+En résumé, voici ce que j'observe :
+- Les sprites marchent nickel.
+- Sur scrolling, il y a des problèmes de pixels "clignotants", tous les 8 pixels.
+  C'est peut-être lié au timing entre le background engine et le line renderer.
+- Il y a visiblement un problème avec la gestion du registre de scroll vertical.
+  Et comme la plupart des jeux changent en cours de frame cette valeur, les backgrounds sont actuellement complètement en vrac.
+
+Je remets l'ancienne version de mon contrôleur SRAM, ça ne règle rien (même pas mes pixels clignotants), mais rien n'empire.
+Bon, il y a plus urgent que ce problème-là, je m'attaque donc au background.
+Je décide d'étudier le problème sur Bomberman'94, vu qu'à priori le layout de l'écran est simple :
+- Un affichage des scores en haut.
+- Une aire de jeux statique en bas.
+Je teste avec pceren et j'obtiens le même affichage cahotique que sur le hardware (ce qui est "rassurant").
+Je me rends compte que finalement, ça va être plus compliqué que prévu, à cause notamment des changements de registres mid-frame.
+Je patche donc Mednafen afin de logguer ces changements de registres.
+Je n'ai pas vraiment d'idée pour intégrer cela dans mon format de fichier de save states...
+Tant pis, j'ajusterai les valeurs de registres en dur dans le code de pceren, et je validerai l'affichage morceau par morceau.
+Sur Bomberman'94 il n'y a qu'un seul changement en gros, ça ne devrait pas être très compliqué.
+En prenant les valeurs de début de l'affichage, j'obtiens bien mon affichage de score.
+Par contre, la fin de l'affichage (l'aire de jeu) est décalée! Bizarre...
+Je rajoute des traces dans pceren et Mednafen, je relis le code de Mednafen et je finis par comprendre!
+Il y a en fait un registre interne qui est chargé avec la valeur de BYR à deux occasions :
+- Au démarrage de l'active display.
+- En début d'active scanline (je suppose) s'il y a eu changement de la valeur de BYR.
+
+J'implémente cela vite fait, je teste sur le hardware directement, et là, c'est le jour et la nuit :)
+L'affichage est quasi-parfait sur les titres que j'ai testés tels Jackie Chan, Coryoon, Magical Chase, R-Type, etc.
+Même Coryoon qui multiplie les plans de scrolling en parallaxe a un rendu nickel.
+
+Ca mérite encore plus que précédemment une petite vidéo :) http://www.youtube.com/watch?v=V0jXQXZHToE
+
+Parmi les jeux testés, Aero Blasters attire mon attention sur un point : le problème de pixels "clignotants" apparaît.
+Sauf que là, c'est sur des écrans quasi-statiques de l'intro que se manifeste le problème.
+Ce n'est donc pas à priori lié à des accès mémoire un peu justes, mais ce serait plutôt un simple problème de calcul.
+Je teste donc avec pceren, l'affichage est correct (!), par contre je reproduis le problème en simulation.
+Me voilà rassuré ;) Reste à trouver le bug, ce qui ne devrait pas être trop compliqué.
+
+Sinon, en discutant avec les uns et les autres, j'obtiens quelques titres de jeux à tester, car réputés pour poser des problèmes aux émulateurs.
+Dans ma liste j'ai déjà Liquid Kids, Violent Soldier, Ankuko Densetsu (pour son utilisation du DMA) et Strip Fighter 2 :)
+
+Je finis par trouver le bug illustré avec Aero Blasters.
+Il se produit lorsque BXR modulo 8 vaut 7 : dans ce cas, le background engine n'a pas fini de traiter la première tile,
+quand le line renderer commence à traiter les données du background buffer.
+Je "décale" un peu le démarrage du line renderer et tout semble rentrer dans l'ordre :)
+
+Je me mets donc à tester les jeux dits "problématiques" :
+- Liquid Kids a l'air de marcher parfaitement.
+- Violent Soldier est plus intéressant : la grande majorité des graphs est corrompue! Et ce, dès l'intro.
+  Je me garde cette ROM sous le coude, pour une analyse détaillée.
+- Ankoko Densetsu présente quelques défauts de décalage background/sprites à priori.
+- Strip Fighter 2 est complètement décalé d'un 1/2 écran horizontalement (!)
+  Il présente aussi une sorte de tremblotement vertical d'une ligne entre les jauges de vie et l'aire de jeu.
+Bref, il reste du boulot. Surtout qu'en retestant Magical Chase débarassé de ses tremblotements, je constate quelques anomalies sur certains plans.
+Rien de dramatique, un simple décalage vertical d'une ligne entre différentes portions de l'affichage.
+A priori ça a l'air dû au rechargement du registre BYR, qui n'est probablement pas bien placé.
+Il faut dire qu'en l'état actuel du projet, il reste pas mal de choses à peine implémentées et/ou non testées...
+
+J'ai aussi commencé à m'intéresser au PSG. J'ai regardé très rapidement le brevet associé, ainsi que le code de Mednafen et de TGEmu.
+Ca n'a pas l'air trop compliqué à première vue... Ce projet sera peut-être donc mon premier projet qui aura du son :)
+
+En attendant je m'attaque au cas Violent Soldier.
+L'avantage avec ce jeu, c'est qu'il va direct à l'essentiel : pas de splash screens statiques, ça commence direct avec l'écran qui pose problème.
+Je fais tourner donc en parallèle Mednafen et son debugger (très utile), et la simulation.
+La comparaison de l'exécution dans les deux environnements est un travail assez fastidieux...
+Pour se donner une idée : http://heliscar.com/greg/PCEdebug.png
+En plus l'exécution n'est pas exactement la même, du fait des timings des interruptions, bref, une partie de plaisir...
+Je trouve au passage un bug sur l'accès aux registres internes du HuC6280, que je corrige rapidement.
+Je finis enfin par trouver la raison de ces graphismes corrompus : une lecture hors du range de la ROM (!)
+Je me dis qu'effectivement c'est quelque chose qui peut arriver en général, et qu'il suffit de recopier la ROM plusieurs fois sur la Flash.
+Et la je remarque quelque chose, la ROM fait 384 Ko. Il y a peut-être une subtilité quant au mapping des derniers 128 Ko.
+Et effectivement, en regardant les sources d'émulateurs, ils sont mappés à partir de 0x80000 et non pas 0x40000 comme on pourrait s'attendre.
+Je bricole une image ROM satisfaisant ce mapping, je la flashe et je teste, et tout rentre dans l'ordre!
+Bonne nouvelle! L'utilisation d'un simple switch sur la carte pour gérer ce cas de figure devrait suffire.
+Apparemment, certaines ROMs de 512 Ko ont le même comportement.
+Il y a aussi des ROMs dont les bits sont inversés (la region-protection du pauvre entre les jeux JP et US), un switch supplémentaire devrait faire l'affaire pour gérer ça ;)
+Je rajoute donc ces deux switches, je teste avec Violent Soldier et c'est OK. Ca me permet de tester aussi PC Genjin (PC Kid) avec succès ;)
+
+Je m'attaque donc au PSG. A cet effet je m'intéresse au code de TGEmu, de Mednafen et au brevet à ce sujet.
+Le PSG se compose de 6 channels, avec les particularités suivantes :
+- Les 6 channels sont capables de générer des waveforms.
+  La mémoire pour stocker ces waveforms est de 32 mots de 5 bits par channel.
+- Les channels 5 et 6 possèdent un "noise generator", basés sur un LFSR (Linear Feedback Shift Register) et un registre de fréquence.
+- La sortie de chaque channel (sur 5 bits donc) une fois convertie en signal analogique passe par 3 atténuateurs (par sortie mono).
+  Le premier est un atténuateur spécifique au channel pour son volume global. 
+  Les deuxièmes sont des atténuateurs spécifiques au channel, mais pour la balance gauche/droite.
+  Les troisèmes sont des atténuateurs communs, avec balance gauche/droite.
+- Plus compliqué, le channel 2 peut être utilisé comme un LFO pour le channel 1.
+  Les données de waveform du channel 2 servent alors à moduler la fréquence du channel 1.
+Comme je suis débutant complet dans la synthèse sonore, je commence à regarder le texte du brevet.
+Le style est assez imbuvable, mais bon ça se comprend : soit c'est le style administratif, soit c'est parce que ce sont des Japonais qui ont écrit ce document.
+Je m'en imprègne cependant, et je décide de regarder le code de TGEmu et de Mednafen.
+TGEmu possède un début d'implémentation, mais à priori rien concernant le LFO ou la génération de bruit...
+Je me tourne donc vers Mednafen, avec son style de code si particulier :)
+J'en tire quelques informations précieuses, notamment sur l'interface CPU, mais le tout me laisse perplexe...
+Surtout qu'après une première phase de "rejet" par rapport au style du texte du brevet, je suis désormais plus à l'aise avec ce document.
+
+Je sais que l'émulation du son est un sujet "sensible" (comprendre : qui draine une catégorie de "puristes").
+Vu les moyens que j'ai à ma disposition, je me dis qu'il devrait être possible de faire quelque chose de bien.
+Certaines parties du code de Mednafen me laissent perplexe... Surtout comparé au brevet.
+Bref, je me dis qu'après tout, en jettant un "oeil neuf" (ou plutot une oreille neuve) sur ce brevet, je pourrai peut-être proposer une autre approche.
+C'est peut-être un peu présomptueux, dans le sens où je crois que les "hacks" de Mednafen ne sont pas là par hasard...
+Mais bon, je n'ai pas de délai à tenir, etc. donc je pense que je vais m'attarder un peu sur cette problématique de synthèse sonore.
+C'est une première pour moi, autant en profiter :)
+
+A quelques subtilités près, la partie "digitale" ne pose pas trop de souci.
+Il y a quelques zones d'ombre, dans l'interface CPU et le rechargement de registres, mais bon ça pourra certainement se corriger plus tard.
+Bref, je fais au mieux de ma compréhension actuelle, et on verra bien.
+Je récupère un bout de code qui pilote le DAC audio de la carte DE1.
+Ce code permet de "nourrir" le DAC en 48 Khz avec des valeurs de 24 bits par canal (gauche/droite).
+Quand on sait que la sortie digitale du PSG est de 5 bits (par channel), on se dit que ça laisse de la marge ;)
+Bon il reste à gérer les atténuateurs, mais bon réflexion faite, toute cette partie peut être gérée par "table".
+En effet, la sortie d'un channel est sur 5 bits, et passe par 3 atténuateurs qui sont réglables par maximum 5 bits.
+En gros, cela représente par channel 32*(32*3) possibilités (l'atténuation globale s'additionnant).
+Ca derait donc 3072 mots de disons 21 bits, histoire que la somme des 6 channels tienne sur 24 bits.
+Je profiterai de cette "table" pour gérer la conversion entre waveforms non signées (PSG) et signées (DAC).
+
+J'écris donc sans grande difficulté la partie logique du PSG (en tout cas, ce que j'en comprends).
+J'adapte le bout de code pilotant le DAC dans mon design.
+Reste à constituer la "table", à connecter l'ensemble, et on verra ce que ça donne ;)
+
+En fait je me dis que ce ne serait pas inutile de procéder à une phase de test en simulation.
+Couplée à des jeux de tests simples (des programmes PCE basiques), je pourrai au moins me débarasser des erreurs triviales.
+J'ai dû apporter quelques corrections au code d'interface vers le DAC pour que ça tourne en simulation, j'espère ne rien avoir "cassé".
+Le DAC se configure via une interface I2C, et il y a une interface série pour transférer les samples.
+Une pulse de synchro indique lorsque les valeurs sont transférées vers le DAC.
+J'utiliserai cette pulse pour démarrer le mixage des échantillons (ça représente 12 lectures de la table).
+
+Je m'attaque donc à la constitution de la table.
+Pour rappel :
+- Un channel sort une valeur de "sample" sur 5 bits (de $00 à $1F). Ces samples sont non-signés.
+- Cette sortie passe dans un premier atténuateur (registre AL du channel) configurable par une valeur sur 5 bits.
+  L'atténuation se fait par pas de 1.5 dB, et est représentée "inversée" : $1F correspond à 0 dB, $1E à -1.5 dB, etc.
+- Cette sortie est ensuite dirigée vers 2 atténuateurs : un pour la gauche, un pour la droite.
+  Ces valeurs (registres LAL et RAL du channel) sont codées sur 4 bits, et un décrément de 1 correspond à 3 dB d'atténuation.
+- Ensuite ces 2 sorties passent par 2 atténuateurs globaux (gauche et droit).
+  Ce sont les registres LMAL et RMAL, codés sur 4 bits, avec 3 dB d'atténuation par décrément de 1.
+Le dB étant une unité logarithmique, le chaînage des atténuations correspond à une addition de celles-ci.
+Une atténuation de N dB correspond à une multiplication par 10^(-N/10).
+Une approximation courante est que 3 dB d'atténuation correspond à une division par 2, car 10^(-0.3) = 0.5011..
+Je commence donc par une approche "simple : 21 bits par sample, et shift simple des valeurs possibles de sortie, comme suit :
+	long sample = (i - 16)<<(21-5); // i varie de 0 à 31
+Cependant je suis moyennement satisfait de ce qui est généré, pour les raisons suivantes :
+- L'amplitude des samples ne couvre pas l'intégralité de la plage possible sur 21 bits.
+- Si je reste sur 21 bits, en faisant un passage sur 24 bits avec l'addition des 6 canaux, je n'utilise que 6/8 des valeurs possibles.
+Bref, l'utilisation de la "bande passante" peut être améliorée, je change donc pour l'approche suivante :
+	double step = (double)((1<<24)-1) / (double)31 / (double)6;
+	long sample = (long)( (double)(i - 15.5) * step ); 
+Ici je suis directement sur 24 bits, mais sans overflow possible, et je répartis au mieux les valeurs sur l'amplitude possible.
+
+Parallèlement à cela, j'écris un peu de code PCE afin de générer une sinusoïdale de 440 Hz.
+Je teste cela dans Mednafen, et j'obtiens bien la tonalité familière du téléphone. :)
+Reste à écrire le design du mixage des canaux basé sur la table générée, et tester l'ensemble en simulation dans un premier temps.
+
+J'écris donc l'ensemble et je teste en simulation, et... rien ne marche!
+Je cherche pendant un certain temps pourquoi, pour finir par découvrir que cela semble venir de certaines constructions que j'utilise en VHDL.
+Là je dois avouer que je ne comprends pas pourquoi, alors que je les ai utilisées avec succès dans le VDC notamment.
+Je fais pas mal de tentatives, sans succès, donc je finis par ne plus les utiliser dans le PSG, et tout rentre dans l'ordre en simulation.
+C'est pas terrible niveau code, mais bon pour la synthèse ça ne fera aucune différence, donc approche "substance over style" :)
+
+Après quelques bugfixes, voilà le design prêt pour la synthèse.
+Je teste sur la ROM présente sur la Flash (Coryoon) et je dois dire que c'est pas mal du tout :)
+Déjà, ça sonne juste, ce qui semble indiquer que mes timings et calculs de fréquence sont justes, ce qui n'est déjà pas si mal.
+Ce qui m'apparaît suspect sur ce titre, c'est le volume des channels "noise" par rapport aux autres.
+Je teste sur Mednafen, et effectivement si les channels "noise" sont forts (plus que je ne l'aurai pensé), la mélodie est plus audible.
+Je change donc ma table d'atténuation, en prenant 0.7 dB par unité au lieu de 1.5 dB, je reteste et là c'est quasi-parfait ;)
+Il faudra cependant que je compare avec le vrai son d'une PCE, car réduire l'atténuation c'est un peu une solution de facilité...
+Enfin c'est carrément une excellente nouvelle, pour une première tentative ;)
+Il y avait tellement de raisons pour que ça ne marche pas que c'en est sureprenant ;)
+
+Je teste d'autres jeux tels PC Genjin, Adventure Island, Shinobi, etc.
+Pour faire simple et rapide, je compare le résultat dans Mednafen à la sortie audio de ma carte FPGA reliée au line-in du PC.
+Je constate que globalement c'est très semblable, mis à part quelques sons bizarres ou manquants.
+J'ai la nette impression que mes problèmes se situent au niveau de la gestion des "noise channels".
+Je n'ai pas non plus terminé la gestion du LFO, mais la différence sonore est plus subtile à détecter.
+Je teste aussi Jackie Chan, et certains sons sont à priori des samples joués en mode "DDA".
+C'est un mode où le CPU alimente en temps réel la sortie audio d'un ou plusieurs channels.
+Et là je constate que ça semble nickel. Tant mieux ça restreint d'autant plus la zone de recherche des problèmes restants.
+
+
+================================================================================
+Février 2012
+================================================================================
+
+
+Re: How to choose which PLL to use ?
+Yes, location assignment for PLLs in Assignment Editor works, and seems to be necessary in some cases, where the compiler/fitter apparently isn't able to select the correct PLL automaticly, e. g. to drive a dedicated clock output. Here an example for a PLL component instantiated in a design entity timing, instance name pll1.
+set_location_assignment PLL_3 -to "timing:pll1|altpll:altpll_component|altpll_mke1:auto_generated"
+The PLL naming scheme for your device (legal assignments) can be seen in Assignment Editor interactive entry, or learnt from the Quartus report resource section.

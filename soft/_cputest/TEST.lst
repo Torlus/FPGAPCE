@@ -1,0 +1,185 @@
+#[1]   TEST.ASM
+    3                             
+    4           0000      START_BANK      .equ    0
+    5           0001      MAIN_BANK       .equ    START_BANK+1
+    6                     
+    7           E000              .code
+    8           0000              .bank START_BANK
+    9                     
+   10                         ; ----
+   11                         ; interrupt vectors
+   12                     
+   13           FFF6              .org  $FFF6
+   14                     
+   15  00:FFF6  6E E0             .dw _irq2
+   16  00:FFF8  72 E0             .dw _irq1
+   17  00:FFFA  73 E0             .dw _timer
+   18  00:FFFC  74 E0             .dw _nmi
+   19  00:FFFE  10 E0             .dw _reset
+   20                     
+   21           E010              .org  $E010
+   22  00:E010            _reset:
+   23                             ;sei                    ; disable interrupts 
+   24  00:E010  58                cli
+   25                             ;csh                    ; select the 7.16 MHz clock
+   26  00:E011  D8                cld                     ; clear the decimal flag 
+   27  00:E012  A2 FF             ldx   #$FF              ; initialize the stack pointer
+   28  00:E014  9A                txs 
+   29  00:E015  A9 FF             lda   #$FF              ; map the I/O bank in the first page
+   30  00:E017  53 01             tam   #0
+   31  00:E019  A9 F8             lda   #$F8              ; and the RAM bank in the second page
+   32  00:E01B  53 02             tam   #1
+   33                     
+   34  00:E01D  18                clc
+   35  00:E01E  B8                clv
+   36  00:E01F  A9 81             lda   #$81
+   37  00:E021  85 44             sta   <$44
+   38  00:E023  62                cla
+   39  00:E024  A5 44             lda   <$44
+   40  00:E026  A9 20             lda   #$20
+   41  00:E028  85 45             sta   <$45
+   42  00:E02A  A2 10             ldx   #$10
+   43  00:E02C  A0 11             ldy       #$11
+   44                     
+   45  00:E02E  D4                csh                     ; select the 7.16 MHz clock
+   46                     
+   47  00:E02F  0A                asl   a
+   48  00:E030  06 44             asl   <$44
+   49  00:E032  16 34             asl   <$34,X
+   50  00:E034  0E 44 20          asl   $2044
+   51  00:E037  1E 34 20          asl   $2034,X
+   52  00:E03A  44 D4             bsr   _reset
+   53                             ;jmp   [$FFFE]
+   54                     
+   55                             ;lda   <$44
+   56                             ;lda   <$35,X
+   57                             ;lda   $2044
+   58                             ;lda   $2035,X
+   59                             ;lda   $2033,Y
+   60                             ;lda   [$44]
+   61                             ;lda   [$35,X]
+   62                             ;lda   [$44],Y
+   63                     
+   64                             ;sta   <$44
+   65                             ;sta   <$35,X
+   66                             ;sta   $2044
+   67                             ;sta   $2035,X
+   68                             ;sta   $2033,Y
+   69                             ;sta   [$44]
+   70                             ;sta   [$35,X]
+   71                             ;sta   [$44],Y
+   72                             
+   73                             ;bbr0  <$44, _toto
+   74                             ;lda   [$44]
+   75                             ;lda   [$44,X]
+   76                             ;rmb0  <$44
+   77                             ;jmp   $E010
+   78                             ;stx   $2000
+   79  00:E03C  73 00 20          tii   $2000,$2001,$0000
+       00:E03F  01 20 00  
+       00:E042  00        
+   80                             ;tii   $2000,$2001,$0002
+   81                             ;asl   <$44
+   82                     
+   83  00:E043  F8                sed
+   84                             ;brk
+   85  00:E044  EA                nop
+   86  00:E045  22                sax
+   87  00:E046  02                sxy
+   88  00:E047            _toto:
+   89  00:E047  EA                nop
+   90                             
+   91                             ;set
+   92                             ;brk
+   93                             ;nop
+   94                             ;stz   $2345,X
+   95                             
+   96                             ;sta   <$34
+   97  00:E048  23 67             st2   #$67
+   98                             ;tma   #1
+   99                             ;tam   #4
+  100  00:E04A  B3 12 56          tst   #$12, $3456,X
+       00:E04D  34        
+  101  00:E04E  A3 12 34          tst   #$12, <$34,X
+  102                             
+  103                             ;tsb   $E010
+  104                             ;set
+  105                             ;ora   #$03
+  106                             ;brk
+  107                             ;nop
+  108                             ;ora   $0012
+  109                             ;ora   $0002,X
+  110                             ;ora   $0001,Y
+  111                             ;ora   <$12
+  112                             ;ora   <$12,X
+  113                             ;ora   [$12]
+  114                             ;ora   [$12,X]
+  115                             ;ora   [$12],Y
+  116                             ;bsr   _test
+  117                     
+  118  00:E051            _test:
+  119  00:E051  60                rts
+  120                             ;bra   _reset
+  121                             ;jmp   $FFFE
+  122                             ;jmp   [$FF20,X]
+  123                             ;asl   a
+  124                             ;asl   <$12
+  125                             ;asl   <$12,X
+  126                             ;asl   $1234
+  127                             ;asl   $1234,X
+  128                             ;sta   <$12
+  129                             ;sta   <$12,X
+  130                             ;sta   $1234
+  131                             ;sta   $1234,X
+  132                             ;sta   $1234,Y
+  133                             ;sta   [$12]
+  134                             ;sta   [$12,X]
+  135                             ;sta   [$12],Y
+  136                             ;lda   <$12
+  137                             ;lda   <$12,X
+  138                             ;lda   $0012
+  139                             ;lda   $0012,X
+  140                             ;lda   $0012,Y
+  141                             ;lda   [$12]
+  142                             ;lda   [$12,X]
+  143                             ;lda   [$12],Y
+  144                             ;adc   #$34
+  145                             ;adc   [$23]
+  146                             
+  147  00:E052  6C FE FF          jmp   [$FFFE]
+  148                     
+  149  00:E055  A9 FF             lda   #$FF              ; map the I/O bank in the first page
+  150  00:E057  53 01             tam   #0
+  151  00:E059  A9 F8             lda   #$F8              ; and the RAM bank in the second page
+  152  00:E05B  53 02             tam   #1
+  153  00:E05D  9C 00 20          stz   $2000             ; clear all the RAM
+  154  00:E060  73 00 20          tii   $2000,$2001,$1FFF
+       00:E063  01 20 FF  
+       00:E066  1F        
+  155                     
+  156                             map   main
+       00:E067  A9 01              lda   #bank(main)        ; addressable memory
+       00:E069  53 40              tam   #page(main)
+  157  00:E06B  4C 00 C0          jmp   main
+  158                     
+  159  00:E06E            _irq2:
+  160  00:E06E  EA                nop
+  161  00:E06F  EA                nop
+  162  00:E070  EA                nop
+  163  00:E071  40                rti
+  164  00:E072            _irq1:
+  165  00:E072  40                rti
+  166  00:E073            _timer:
+  167  00:E073  40                rti
+  168  00:E074            _nmi:
+  169  00:E074  EA                nop
+  170  00:E075  EA                nop
+  171  00:E076  EA                nop
+  172  00:E077  40                rti
+  173                     
+  174                     
+  175           E078              .code
+  176           0001              .bank MAIN_BANK
+  177           C000              .org  $C000
+  178  01:C000            main:
+  179  01:C000  4C 00 C0          jmp     main

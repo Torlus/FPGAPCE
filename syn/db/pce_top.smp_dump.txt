@@ -1,0 +1,266 @@
+
+State Machine - |pce_top|bootState
+Name bootState.BOOT_DONE bootState.BOOT_REL bootState.BOOT_WRITE_2 bootState.BOOT_WRITE_1 bootState.BOOT_READ_2 bootState.BOOT_READ_1 
+bootState.BOOT_READ_1 0 0 0 0 0 0 
+bootState.BOOT_READ_2 0 0 0 0 1 1 
+bootState.BOOT_WRITE_1 0 0 0 1 0 1 
+bootState.BOOT_WRITE_2 0 0 1 0 0 1 
+bootState.BOOT_REL 0 1 0 0 0 1 
+bootState.BOOT_DONE 1 0 0 0 0 1 
+
+State Machine - |pce_top|sdram_controller:SDRC|chameleon_sdram:sdr|currentState
+Name currentState.RAM_AUTOREFRESH currentState.RAM_PRECHARGE_ALL currentState.RAM_PRECHARGE currentState.RAM_WRITE_DLY currentState.RAM_WRITE_ABORT currentState.RAM_WRITE_4 currentState.RAM_WRITE_3 currentState.RAM_WRITE_2 currentState.RAM_WRITE_1 currentState.RAM_READ_5 currentState.RAM_READ_4 currentState.RAM_READ_3 currentState.RAM_READ_2 currentState.RAM_READ_1 currentState.RAM_ACTIVE currentState.RAM_IDLE currentState.RAM_SETMODE currentState.RAM_INITAUTO2 currentState.RAM_INITAUTO1 currentState.RAM_INIT_PRECHARGE currentState.RAM_INIT 
+currentState.RAM_INIT 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+currentState.RAM_INIT_PRECHARGE 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 
+currentState.RAM_INITAUTO1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 1 
+currentState.RAM_INITAUTO2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 1 
+currentState.RAM_SETMODE 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 1 
+currentState.RAM_IDLE 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 1 
+currentState.RAM_ACTIVE 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 
+currentState.RAM_READ_1 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 1 
+currentState.RAM_READ_2 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 
+currentState.RAM_READ_3 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 1 
+currentState.RAM_READ_4 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 1 
+currentState.RAM_READ_5 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 1 
+currentState.RAM_WRITE_1 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 
+currentState.RAM_WRITE_2 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1 
+currentState.RAM_WRITE_3 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+currentState.RAM_WRITE_4 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+currentState.RAM_WRITE_ABORT 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+currentState.RAM_WRITE_DLY 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+currentState.RAM_PRECHARGE 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+currentState.RAM_PRECHARGE_ALL 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+currentState.RAM_AUTOREFRESH 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+
+State Machine - |pce_top|sdram_controller:SDRC|chameleon_sdram:sdr|currentPort
+Name currentPort.PORT_ROMWR currentPort.PORT_ROMRD currentPort.PORT_VDCDMAS currentPort.PORT_VDCBG currentPort.PORT_VDCSP currentPort.PORT_VDCDMA currentPort.PORT_VDCCPU currentPort.PORT_CPU_1541 currentPort.PORT_REU currentPort.PORT_CPU6510 currentPort.PORT_VICVID currentPort.PORT_VID1 currentPort.PORT_VID0 currentPort.PORT_CACHE currentPort.PORT_NONE 
+currentPort.PORT_NONE 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+currentPort.PORT_CACHE 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 
+currentPort.PORT_VID0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 1 
+currentPort.PORT_VID1 0 0 0 0 0 0 0 0 0 0 0 1 0 0 1 
+currentPort.PORT_VICVID 0 0 0 0 0 0 0 0 0 0 1 0 0 0 1 
+currentPort.PORT_CPU6510 0 0 0 0 0 0 0 0 0 1 0 0 0 0 1 
+currentPort.PORT_REU 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 
+currentPort.PORT_CPU_1541 0 0 0 0 0 0 0 1 0 0 0 0 0 0 1 
+currentPort.PORT_VDCCPU 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 
+currentPort.PORT_VDCDMA 0 0 0 0 0 1 0 0 0 0 0 0 0 0 1 
+currentPort.PORT_VDCSP 0 0 0 0 1 0 0 0 0 0 0 0 0 0 1 
+currentPort.PORT_VDCBG 0 0 0 1 0 0 0 0 0 0 0 0 0 0 1 
+currentPort.PORT_VDCDMAS 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 
+currentPort.PORT_ROMRD 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1 
+currentPort.PORT_ROMWR 1 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+
+State Machine - |pce_top|sdram_controller:SDRC|chameleon_sdram:sdr|ramState
+Name ramState.RAM_AUTOREFRESH ramState.RAM_PRECHARGE_ALL ramState.RAM_PRECHARGE ramState.RAM_WRITE_DLY ramState.RAM_WRITE_ABORT ramState.RAM_WRITE_4 ramState.RAM_WRITE_3 ramState.RAM_WRITE_2 ramState.RAM_WRITE_1 ramState.RAM_READ_5 ramState.RAM_READ_4 ramState.RAM_READ_3 ramState.RAM_READ_2 ramState.RAM_READ_1 ramState.RAM_ACTIVE ramState.RAM_IDLE ramState.RAM_SETMODE ramState.RAM_INITAUTO2 ramState.RAM_INITAUTO1 ramState.RAM_INIT_PRECHARGE ramState.RAM_INIT 
+ramState.RAM_INIT 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+ramState.RAM_INIT_PRECHARGE 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 
+ramState.RAM_INITAUTO1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 1 
+ramState.RAM_INITAUTO2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 1 
+ramState.RAM_SETMODE 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 1 
+ramState.RAM_IDLE 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 1 
+ramState.RAM_ACTIVE 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 
+ramState.RAM_READ_1 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 1 
+ramState.RAM_READ_2 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 
+ramState.RAM_READ_3 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 1 
+ramState.RAM_READ_4 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 1 
+ramState.RAM_READ_5 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 1 
+ramState.RAM_WRITE_1 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 
+ramState.RAM_WRITE_2 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1 
+ramState.RAM_WRITE_3 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+ramState.RAM_WRITE_4 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+ramState.RAM_WRITE_ABORT 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+ramState.RAM_WRITE_DLY 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+ramState.RAM_PRECHARGE 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+ramState.RAM_PRECHARGE_ALL 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+ramState.RAM_AUTOREFRESH 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+
+State Machine - |pce_top|huc6270:VDC|CPU
+Name CPU.CPU_WAIT CPU.CPU_RAM_PRE_WR_INC CPU.CPU_RAM_WR_INC CPU.CPU_RAM_PRE_RD CPU.CPU_RAM_RD CPU.CPU_IDLE 
+CPU.CPU_IDLE 0 0 0 0 0 0 
+CPU.CPU_RAM_RD 0 0 0 0 1 1 
+CPU.CPU_RAM_PRE_RD 0 0 0 1 0 1 
+CPU.CPU_RAM_WR_INC 0 0 1 0 0 1 
+CPU.CPU_RAM_PRE_WR_INC 0 1 0 0 0 1 
+CPU.CPU_WAIT 1 0 0 0 0 1 
+
+State Machine - |pce_top|huc6270:VDC|DMAS
+Name DMAS.DMAS_END DMAS.DMAS_WRITE DMAS.DMAS_READ2 DMAS.DMAS_READ1 DMAS.DMAS_READ DMAS.DMAS_IDLE 
+DMAS.DMAS_IDLE 0 0 0 0 0 0 
+DMAS.DMAS_READ 0 0 0 0 1 1 
+DMAS.DMAS_READ1 0 0 0 1 0 1 
+DMAS.DMAS_READ2 0 0 1 0 0 1 
+DMAS.DMAS_WRITE 0 1 0 0 0 1 
+DMAS.DMAS_END 1 0 0 0 0 1 
+
+State Machine - |pce_top|huc6270:VDC|DMA
+Name DMA.DMA_LOOP2 DMA.DMA_LOOP DMA.DMA_WRITE2 DMA.DMA_WRITE1 DMA.DMA_WRITE DMA.DMA_READ2 DMA.DMA_READ1 DMA.DMA_READ DMA.DMA_IDLE 
+DMA.DMA_IDLE 0 0 0 0 0 0 0 0 0 
+DMA.DMA_READ 0 0 0 0 0 0 0 1 1 
+DMA.DMA_READ1 0 0 0 0 0 0 1 0 1 
+DMA.DMA_READ2 0 0 0 0 0 1 0 0 1 
+DMA.DMA_WRITE 0 0 0 0 1 0 0 0 1 
+DMA.DMA_WRITE1 0 0 0 1 0 0 0 0 1 
+DMA.DMA_WRITE2 0 0 1 0 0 0 0 0 1 
+DMA.DMA_LOOP 0 1 0 0 0 0 0 0 1 
+DMA.DMA_LOOP2 1 0 0 0 0 0 0 0 1 
+
+State Machine - |pce_top|huc6270:VDC|REN
+Name REN.REN_CLK REN.REN_BGW REN.REN_INI REN.REN_BGR 
+REN.REN_BGR 0 0 0 0 
+REN.REN_INI 0 0 1 1 
+REN.REN_BGW 0 1 0 1 
+REN.REN_CLK 1 0 0 1 
+
+State Machine - |pce_top|huc6270:VDC|SP2
+Name SP2.SP2_END SP2.SP2_RD3_W SP2.SP2_RD3 SP2.SP2_RD2_W SP2.SP2_RD2 SP2.SP2_RD1_W SP2.SP2_RD1 SP2.SP2_RD0_W SP2.SP2_RD0 SP2.SP2_INI_W SP2.SP2_INI 
+SP2.SP2_INI 0 0 0 0 0 0 0 0 0 0 0 
+SP2.SP2_INI_W 0 0 0 0 0 0 0 0 0 1 1 
+SP2.SP2_RD0 0 0 0 0 0 0 0 0 1 0 1 
+SP2.SP2_RD0_W 0 0 0 0 0 0 0 1 0 0 1 
+SP2.SP2_RD1 0 0 0 0 0 0 1 0 0 0 1 
+SP2.SP2_RD1_W 0 0 0 0 0 1 0 0 0 0 1 
+SP2.SP2_RD2 0 0 0 0 1 0 0 0 0 0 1 
+SP2.SP2_RD2_W 0 0 0 1 0 0 0 0 0 0 1 
+SP2.SP2_RD3 0 0 1 0 0 0 0 0 0 0 1 
+SP2.SP2_RD3_W 0 1 0 0 0 0 0 0 0 0 1 
+SP2.SP2_END 1 0 0 0 0 0 0 0 0 0 1 
+
+State Machine - |pce_top|huc6270:VDC|SP1
+Name SP1.SP1_END SP1.SP1_LOOP SP1.SP1_RIGHT SP1.SP1_LEFT SP1.SP1_TST SP1.SP1_RD3 SP1.SP1_RD2 SP1.SP1_RD1 SP1.SP1_RD0 SP1.SP1_INI 
+SP1.SP1_INI 0 0 0 0 0 0 0 0 0 0 
+SP1.SP1_RD0 0 0 0 0 0 0 0 0 1 1 
+SP1.SP1_RD1 0 0 0 0 0 0 0 1 0 1 
+SP1.SP1_RD2 0 0 0 0 0 0 1 0 0 1 
+SP1.SP1_RD3 0 0 0 0 0 1 0 0 0 1 
+SP1.SP1_TST 0 0 0 0 1 0 0 0 0 1 
+SP1.SP1_LEFT 0 0 0 1 0 0 0 0 0 1 
+SP1.SP1_RIGHT 0 0 1 0 0 0 0 0 0 1 
+SP1.SP1_LOOP 0 1 0 0 0 0 0 0 0 1 
+SP1.SP1_END 1 0 0 0 0 0 0 0 0 1 
+
+State Machine - |pce_top|huc6270:VDC|BG2
+Name BG2.BG2_LOOP BG2.BG2_WRITE BG2.BG2_INI 
+BG2.BG2_INI 0 0 0 
+BG2.BG2_WRITE 0 1 1 
+BG2.BG2_LOOP 1 0 1 
+
+State Machine - |pce_top|huc6270:VDC|BG1
+Name BG1.BG1_END BG1.BG1_CG1_W BG1.BG1_CG1 BG1.BG1_CG0_W BG1.BG1_CG0 BG1.BG1_NOP_W BG1.BG1_NOP BG1.BG1_BAT_W BG1.BG1_BAT BG1.BG1_CPU_W BG1.BG1_CPU BG1.BG1_INI_W BG1.BG1_INI 
+BG1.BG1_INI 0 0 0 0 0 0 0 0 0 0 0 0 0 
+BG1.BG1_INI_W 0 0 0 0 0 0 0 0 0 0 0 1 1 
+BG1.BG1_CPU 0 0 0 0 0 0 0 0 0 0 1 0 1 
+BG1.BG1_CPU_W 0 0 0 0 0 0 0 0 0 1 0 0 1 
+BG1.BG1_BAT 0 0 0 0 0 0 0 0 1 0 0 0 1 
+BG1.BG1_BAT_W 0 0 0 0 0 0 0 1 0 0 0 0 1 
+BG1.BG1_NOP 0 0 0 0 0 0 1 0 0 0 0 0 1 
+BG1.BG1_NOP_W 0 0 0 0 0 1 0 0 0 0 0 0 1 
+BG1.BG1_CG0 0 0 0 0 1 0 0 0 0 0 0 0 1 
+BG1.BG1_CG0_W 0 0 0 1 0 0 0 0 0 0 0 0 1 
+BG1.BG1_CG1 0 0 1 0 0 0 0 0 0 0 0 0 1 
+BG1.BG1_CG1_W 0 1 0 0 0 0 0 0 0 0 0 0 1 
+BG1.BG1_END 1 0 0 0 0 0 0 0 0 0 0 0 1 
+
+State Machine - |pce_top|huc6260:VCE|CTRL
+Name CTRL.CTRL_INCR CTRL.CTRL_WAIT CTRL.CTRL_IDLE 
+CTRL.CTRL_IDLE 0 0 0 
+CTRL.CTRL_WAIT 0 1 1 
+CTRL.CTRL_INCR 1 0 1 
+
+State Machine - |pce_top|huc6280:CPU|g00_audio_interface:DAC|state
+Name state.send state.sw2b3 state.sw2b2 state.sw2b1 state.sw1b3 state.sw1b2 state.sw1b1 state.sack33 state.sack32 state.sack31 state.sack23 state.sack22 state.sack21 state.sack13 state.sack12 state.sack11 state.sab3 state.sab2 state.sab1 state.s2 state.s1 state.s0 state.sw_init1 state.sw_init0 
+state.sw_init0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+state.sw_init1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 
+state.s0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 1 
+state.s1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 1 
+state.s2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 1 
+state.sab1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 1 
+state.sab2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 
+state.sab3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 1 
+state.sack11 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 
+state.sack12 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 1 
+state.sack13 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 1 
+state.sack21 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 1 
+state.sack22 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 
+state.sack23 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.sack31 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.sack32 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.sack33 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.sw1b1 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.sw1b2 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.sw1b3 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.sw2b1 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.sw2b2 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.sw2b3 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.send 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+
+State Machine - |pce_top|huc6280:CPU|g00_audio_interface:DAC|state2
+Name state2.sw_write state2.sw_ready state2.sw_init1 state2.sw_init0 
+state2.sw_init0 0 0 0 0 
+state2.sw_init1 0 0 1 1 
+state2.sw_ready 0 1 0 1 
+state2.sw_write 1 0 0 1 
+
+State Machine - |pce_top|huc6280:CPU|psg:PSG|MIX
+Name MIX.MIX_END MIX.MIX_RNEXT MIX.MIX_RREAD2 MIX.MIX_RREAD MIX.MIX_LNEXT MIX.MIX_LREAD2 MIX.MIX_LREAD MIX.MIX_WAIT 
+MIX.MIX_WAIT 0 0 0 0 0 0 0 0 
+MIX.MIX_LREAD 0 0 0 0 0 0 1 1 
+MIX.MIX_LREAD2 0 0 0 0 0 1 0 1 
+MIX.MIX_LNEXT 0 0 0 0 1 0 0 1 
+MIX.MIX_RREAD 0 0 0 1 0 0 0 1 
+MIX.MIX_RREAD2 0 0 1 0 0 0 0 1 
+MIX.MIX_RNEXT 0 1 0 0 0 0 0 1 
+MIX.MIX_END 1 0 0 0 0 0 0 1 
+
+State Machine - |pce_top|huc6280:CPU|cpu65xx:CPU|theCpuCycle
+Name theCpuCycle.cycleBlkSuY theCpuCycle.cycleBlkSuA theCpuCycle.cycleBlkSuX theCpuCycle.cycleBlkPreSu theCpuCycle.cycleBlkTrsLoop2 theCpuCycle.cycleBlkTrsLoop1 theCpuCycle.cycleBlkTrsWr2 theCpuCycle.cycleBlkTrsWr1 theCpuCycle.cycleBlkTrsRd2 theCpuCycle.cycleBlkTrsRd1 theCpuCycle.cycleBlkPreTrs theCpuCycle.cycleBlkRdLen2 theCpuCycle.cycleBlkRdLen1 theCpuCycle.cycleBlkRdDstA2 theCpuCycle.cycleBlkRdDstA1 theCpuCycle.cycleBlkRdSrcA2 theCpuCycle.cycleBlkRdSrcA1 theCpuCycle.cycleBlkSdX theCpuCycle.cycleBlkSdA theCpuCycle.cycleBlkSdY theCpuCycle.cycleBlkPreSd theCpuCycle.cycleEndIncr theCpuCycle.cycleEnd theCpuCycle.cycleJump theCpuCycle.cycleStack4 theCpuCycle.cycleStack3 theCpuCycle.cycleStack2 theCpuCycle.cycleStack1 theCpuCycle.cycleTWrite theCpuCycle.cycleTPreWrite theCpuCycle.cycleTRead theCpuCycle.cycleWrite theCpuCycle.cyclePreWrite theCpuCycle.cycleRmw theCpuCycle.cyclePostReadImm theCpuCycle.cycleReadImm theCpuCycle.cyclePreReadImm theCpuCycle.cycleReadRel theCpuCycle.cyclePreReadRel theCpuCycle.cycleRead2 theCpuCycle.cycleRead theCpuCycle.cyclePreReadAbs theCpuCycle.cyclePreRead theCpuCycle.cycleBranchPage theCpuCycle.cycleBranchTaken theCpuCycle.cyclePreBranchTaken theCpuCycle.cycleIndirect theCpuCycle.cyclePreIndirect theCpuCycle.cycle3 theCpuCycle.opcodeFetch theCpuCycle.cycle2 
+theCpuCycle.cycle2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+theCpuCycle.opcodeFetch 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 
+theCpuCycle.cycle3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 1 
+theCpuCycle.cyclePreIndirect 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 1 
+theCpuCycle.cycleIndirect 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 1 
+theCpuCycle.cyclePreBranchTaken 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 1 
+theCpuCycle.cycleBranchTaken 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 
+theCpuCycle.cycleBranchPage 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 1 
+theCpuCycle.cyclePreRead 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 
+theCpuCycle.cyclePreReadAbs 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleRead 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleRead2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cyclePreReadRel 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleReadRel 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cyclePreReadImm 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleReadImm 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cyclePostReadImm 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleRmw 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cyclePreWrite 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleWrite 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleTRead 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleTPreWrite 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleTWrite 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleStack1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleStack2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleStack3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleStack4 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleJump 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleEnd 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleEndIncr 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleBlkPreSd 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleBlkSdY 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleBlkSdA 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleBlkSdX 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleBlkRdSrcA1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleBlkRdSrcA2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleBlkRdDstA1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleBlkRdDstA2 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleBlkRdLen1 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleBlkRdLen2 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleBlkPreTrs 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleBlkTrsRd1 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleBlkTrsRd2 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleBlkTrsWr1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleBlkTrsWr2 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleBlkTrsLoop1 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleBlkTrsLoop2 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleBlkPreSu 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleBlkSuX 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleBlkSuA 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+theCpuCycle.cycleBlkSuY 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 

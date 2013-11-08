@@ -1,0 +1,4122 @@
+#[1]   BALL.ASM
+    5                                     
+    6           0000                     .if (CDROM)
+    8                                    .else
+#[3]   standard.inc
+    9                                     .include  "standard.inc" ; HUCARD
+    1                     ;
+    2                     ; STANDARD.INC  -  MagicKit standard include file
+    3                     ;
+#[4]   equ.inc
+    4                             .include        "equ.inc"
+    1                     ;
+    2                     ; EQU.INC  -  MagicKit Standard Equates
+    3                     ;
+    4                     ;
+    5                     
+    6                     
+    7                     ; --------
+    8                     ; This block defines standard system variables
+    9                     ; in zero-page.
+   10                     ;
+   11                     
+   12           20F3      vdc_crl = $20F3 ; VDC control register   (copy of)
+   13           20F4      vdc_crh = $20F4 ;
+   14           20F5      irq_m   = $20F5 ; interrupt control mask (copy of)
+   15           20F6      vdc_sr  = $20F6 ; VDC status register    (copy of)
+   16           20F7      vdc_reg = $20F7 ; VDC register index     (copy of)
+   17                     
+   18                             ; old aliases (for compatibility only, don't use them)
+   19                     
+   20           0001              .ifndef HUC
+   21           20F5      _irq_m  = $20F5
+   22           20F6      _vsr    = $20F6
+   23           20F7      _vreg   = $20F7
+   24                             .endif
+   25                     
+   26                     ; --------
+   27                     ; This block defines standard parameter-passing
+   28                     ; areas (in zero-page) for subroutines.
+   29                     ;
+   30                     
+   31           20EC      _bp     = $20EC ; base pointer
+   32           20EE      _si     = $20EE ; source address
+   33           20F0      _di     = $20F0 ; destination address
+   34           20F8      _ax     = $20F8
+   35           20F8      _al     = $20F8
+   36           20F9      _ah     = $20F9
+   37           20FA      _bx     = $20FA
+   38           20FA      _bl     = $20FA
+   39           20FB      _bh     = $20FB
+   40           20FC      _cx     = $20FC
+   41           20FC      _cl     = $20FC
+   42           20FD      _ch     = $20FD
+   43           20FE      _dx     = $20FE
+   44           20FE      _dl     = $20FE
+   45           20FF      _dh     = $20FF
+   46                     
+   47                     
+   48                     ; --------
+   49                     ; This block defines names for standard
+   50                     ; devices and equipment on the PC-Engine.
+   51                     ; (they should be self-explanatory...)
+   52                     ;
+   53                     
+   54                         ; ----
+   55                         ; VDC (Video Display Controller)
+   56                     
+   57           0000      videoport    .equ $0000
+   58                     
+   59           0000      video_reg    .equ videoport
+   60           0000      video_reg_l  .equ video_reg
+   61           0001      video_reg_h  .equ video_reg+1
+   62                     
+   63           0002      video_data   .equ videoport+2
+   64           0002      video_data_l .equ video_data
+   65           0003      video_data_h .equ video_data+1
+   66                     
+   67                     
+   68                         ; ----
+   69                         ; VCE (Video Color Encoder)
+   70                     
+   71           0400      colorport    .equ $0400
+   72           0400      color_ctrl   .equ colorport
+   73                     
+   74           0402      color_reg    .equ colorport+2
+   75           0402      color_reg_l  .equ color_reg
+   76           0403      color_reg_h  .equ color_reg+1
+   77                     
+   78           0404      color_data   .equ colorport+4
+   79           0404      color_data_l .equ color_data
+   80           0405      color_data_h .equ color_data+1
+   81                     
+   82           0000                   .ifdef HUC
+   85                                  .endif
+   86                     
+   87                         ; ----
+   88                         ; PSG (Programmable Sound Generator)
+   89                     
+   90           0800      psgport      .equ $0800
+   91           0800      psg_ch       .equ psgport
+   92           0801      psg_mainvol  .equ psgport+1
+   93           0802      psg_freqlo   .equ psgport+2
+   94           0803      psg_freqhi   .equ psgport+3
+   95           0804      psg_ctrl     .equ psgport+4
+   96           0805      psg_pan      .equ psgport+5
+   97           0806      psg_wave     .equ psgport+6
+   98           0807      psg_noise    .equ psgport+7
+   99           0808      psg_lfofreq  .equ psgport+8
+  100           0809      psg_lfoctrl  .equ psgport+9
+  101                     
+  102                     
+  103                         ; ----
+  104                         ; TIMER
+  105                     
+  106           0C00      timerport    .equ $0C00
+  107           0C00      timer_cnt    .equ timerport
+  108           0C01      timer_ctrl   .equ timerport+1        
+  109                     
+  110                     
+  111                         ; ----
+  112                         ; I/O port
+  113                     
+  114           1000      joyport      .equ $1000
+  115                     
+  116                     
+  117                         ; ----
+  118                         ; IRQ ports
+  119                     
+  120           1400      irqport      .equ $1400
+  121           1402      irq_disable  .equ irqport+2
+  122           1403      irq_status   .equ irqport+3
+  123                     
+  124                     
+  125                     ; --------
+  126                     ; This block defines names for macro
+  127                     ; argument types (\?x).
+  128                     ;
+  129                     
+  130           0000      ARG_NONE        .equ 0
+  131           0001      ARG_REG         .equ 1
+  132           0002      ARG_IMMED       .equ 2
+  133           0003      ARG_ABS         .equ 3
+  134           0003      ARG_ABSOLUTE    .equ 3
+  135           0004      ARG_INDIRECT    .equ 4
+  136           0005      ARG_STRING      .equ 5
+  137           0006      ARG_LABEL       .equ 6
+  138                     
+#[3]   standard.inc
+#[4]   macro.inc
+    5                             .include        "macro.inc"
+    1                     ;
+    2                     ; MACRO.INC  -  MagicKit standard MACRO definitions
+    3                     ;
+    4                     
+    5                     map     .macro                  ; map a memory bank into
+    6                              lda   #bank(\1)        ; addressable memory
+    7                              tam   #page(\1)
+    8                             .endm
+    9                     
+   10                     ;
+   11                     ; STWZ - store a word-sized zero value at stated memory location
+   12                     ;
+   13                     stwz    .macro
+   14                              stz    LOW_BYTE \1
+   15                              stz    HIGH_BYTE \1
+   16                             .endm
+   17                     
+   18                     ;
+   19                     ; STW - store a word-sized value at stated memory location
+   20                     ;
+   21                     stw     .macro
+   22                              lda    LOW_BYTE \1
+   23                              sta    LOW_BYTE \2
+   24                              lda    HIGH_BYTE \1
+   25                              sta    HIGH_BYTE \2
+   26                             .endm
+   27                     
+   28                     stb     .macro
+   29                              lda    \1
+   30                              sta    \2
+   31                             .endm
+   32                     
+   33                     ;
+   34                     ; ADDW - add word-sized value to value at stated memory location,
+   35                     ;        storing result back into stated memory location (or into
+   36                     ;        another destination memory location - third arg)
+   37                     ;
+   38                     addw    .macro
+   39                             .if     (\# = 3)
+   40                              ; 3-arg mode
+   41                              ;
+   42                              clc
+   43                              lda    LOW_BYTE \2
+   44                              adc    LOW_BYTE \1
+   45                              sta    LOW_BYTE \3
+   46                              lda    HIGH_BYTE \2
+   47                              adc    HIGH_BYTE \1
+   48                              sta    HIGH_BYTE \3
+   49                             .else
+   50                              ; 2-arg mode
+   51                              ;
+   52                              clc
+   53                              lda    LOW_BYTE \2
+   54                              adc    LOW_BYTE \1
+   55                              sta    LOW_BYTE \2
+   56                              lda    HIGH_BYTE \2
+   57                              adc    HIGH_BYTE \1
+   58                              sta    HIGH_BYTE \2
+   59                             .endif
+   60                             .endm
+   61                     
+   62                     ;
+   63                     ; ADCW - add word-sized value plus carry to value at stated memory location,
+   64                     ;        storing result back into stated memory location
+   65                     ;
+   66                     adcw    .macro
+   67                              lda    LOW_BYTE \2
+   68                              adc    LOW_BYTE \1
+   69                              sta    LOW_BYTE \2
+   70                              lda    HIGH_BYTE \2
+   71                              adc    HIGH_BYTE \1
+   72                              sta    HIGH_BYTE \2
+   73                             .endm
+   74                     
+   75                     ;
+   76                     ; SUBW - substract word-sized value from value at stated memory location,
+   77                     ;        storing result back into stated memory location
+   78                     ;
+   79                     subw    .macro
+   80                              sec
+   81                              lda    LOW_BYTE \2
+   82                              sbc    LOW_BYTE \1
+   83                              sta    LOW_BYTE \2
+   84                              lda    HIGH_BYTE \2
+   85                              sbc    HIGH_BYTE \1
+   86                              sta    HIGH_BYTE \2
+   87                             .endm
+   88                     
+   89                     ;
+   90                     ; SBCW - substract word-sized value plus carry from value at stated memory
+   91                     ;        location, storing result back into stated memory location
+   92                     ;
+   93                     sbcw    .macro
+   94                              lda    LOW_BYTE \2
+   95                              sbc    LOW_BYTE \1
+   96                              sta    LOW_BYTE \2
+   97                              lda    HIGH_BYTE \2
+   98                              sbc    HIGH_BYTE \1
+   99                              sta    HIGH_BYTE \2
+  100                             .endm
+  101                     
+  102                     cmpw    .macro
+  103                              lda    HIGH_BYTE \2
+  104                              cmp    HIGH_BYTE \1
+  105                              bne    .x_\@
+  106                              lda    LOW_BYTE \2
+  107                              cmp    LOW_BYTE \1
+  108                     .x_\@:
+  109                             .endm
+  110                     
+  111                     tstw    .macro                  ; test if the word-sized 
+  112                              lda   \1               ; value at stated memory
+  113                              ora   \1+1             ; location is zero
+  114                             .endm
+  115                     
+  116                     incw    .macro                  ; increment a word-sized
+  117                              inc    \1              ; value at stated memory
+  118                              bne    .x_\@           ; location
+  119                              inc    \1+1
+  120                     .x_\@:
+  121                             .endm
+  122                     
+  123                     decw    .macro                  ; decrement a word-sized
+  124                              sec                    ; value at stated memory
+  125                              lda    \1              ; location
+  126                              sbc    #1
+  127                              sta    \1
+  128                              lda    \1+1
+  129                              sbc    #0
+  130                              sta    \1+1
+  131                             .endm
+  132                     
+  133                     rolw    .macro                  ; rotate word-sized value
+  134                              rol    \1              ; (at stated memory location)
+  135                              rol    \1+1
+  136                             .endm
+  137                     
+  138                     aslw    .macro                  ; arithmetic shift-left
+  139                              asl    \1              ; word-sized value (at stated
+  140                              rol    \1+1            ; memory location)
+  141                             .endm
+  142                     
+  143                     lsrw    .macro                  ; logical shift-right word-sized
+  144                              lsr    \1+1            ; value (at stated memory
+  145                              ror    \1              ; location)
+  146                             .endm
+  147                     
+  148                     rorw    .macro                  ; rotate right word-sized value
+  149                              ror    \1+1            ; (at stated memory location)
+  150                              ror    \1
+  151                             .endm
+  152                     
+  153                     negw    .macro                  ; negate word-sized value
+  154                              cla                    ; (at stated memory location)
+  155                              sub    \1              ; 2's complement
+  156                              sta    \1
+  157                              cla
+  158                              sbc    \1+1
+  159                              sta    \1+1
+  160                             .endm
+  161                     
+  162                     neg     .macro                  ; negate byte-sized value
+  163                              eor    #$FF            ; in register A
+  164                              inc    A               ; 2's complement
+  165                             .endm
+  166                     
+  167                     add     .macro                  ; add byte-sized value to
+  168                             .if (\# = 2)            ; register A (handle carry
+  169                              lda    \2              ; flag)
+  170                              clc
+  171                              adc    \1
+  172                              sta    \2
+  173                             .else
+  174                              clc
+  175                              adc    \1
+  176                             .endif
+  177                             .endm
+  178                     
+  179                     sub     .macro                  ; subtract byte-sized value
+  180                             .if (\# = 2)            ; from register A (handle
+  181                              lda    \2              ; carry flag)
+  182                              sec
+  183                              sbc    \1
+  184                              sta    \2
+  185                             .else
+  186                              sec
+  187                              sbc    \1
+  188                             .endif
+  189                             .endm
+  190                     
+  191                     blo     .macro                  ; branch if 'lower'
+  192                              bcc    \1
+  193                             .endm
+  194                     
+  195                     bhs     .macro                  ; branch if 'higher or same'
+  196                              bcs    \1
+  197                             .endm
+  198                     
+  199                     bhi     .macro                  ; branch if 'higher'
+  200                              beq    .x_\@
+  201                              bcs    \1
+  202                     .x_\@:
+  203                             .endm
+  204                     
+  205                     ;-------------------------------
+  206                     
+  207                     ;
+  208                     ; Long branch MACROs
+  209                     ;
+  210                     
+  211                     lbne    .macro
+  212                              beq    .x_\@
+  213                              jmp    \1
+  214                     .x_\@
+  215                             .endm
+  216                     
+  217                     lbeq    .macro
+  218                              bne    .x_\@
+  219                              jmp    \1
+  220                     .x_\@
+  221                             .endm
+  222                     
+  223                     lbpl    .macro
+  224                              bmi    .x_\@
+  225                              jmp    \1
+  226                     .x_\@
+  227                             .endm
+  228                     
+  229                     lbmi    .macro
+  230                              bpl    .x_\@
+  231                              jmp    \1
+  232                     .x_\@
+  233                             .endm
+  234                     
+  235                     lbcc    .macro
+  236                              bcs    .x_\@
+  237                              jmp    \1
+  238                     .x_\@
+  239                             .endm
+  240                     
+  241                     lbcs    .macro
+  242                              bcc    .x_\@
+  243                              jmp    \1
+  244                     .x_\@
+  245                             .endm
+  246                     
+  247                     lblo    .macro
+  248                              bcs    .x_\@
+  249                              jmp    \1
+  250                     .x_\@
+  251                             .endm
+  252                     
+  253                     lbhs    .macro
+  254                              bcc    .x_\@
+  255                              jmp    \1
+  256                     .x_\@
+  257                             .endm
+  258                     
+  259                     
+  260                     ;-------------------------------
+  261                     
+  262                     ;
+  263                     ; These MACROs are the same as the MACROs
+  264                     ; without an underscore; the difference
+  265                     ; is these MACROs preserve the state of
+  266                     ; the registers they use (at the expense
+  267                     ; of speed)
+  268                     ;
+  269                     
+  270                     _stw    .macro
+  271                              pha
+  272                              stw    \1,\2
+  273                              pla
+  274                             .endm
+  275                     
+  276                     _addw   .macro
+  277                              pha
+  278                              addw   \1,\2
+  279                              pla
+  280                             .endm
+  281                     
+  282                     _adcw   .macro
+  283                              pha
+  284                              adcw   \1,\2
+  285                              pla
+  286                             .endm
+  287                     
+  288                     _subw   .macro
+  289                              pha
+  290                              subw   \1,\2
+  291                              pla
+  292                             .endm
+  293                     
+  294                     _sbcw   .macro
+  295                              pha
+  296                              sbcw   \1,\2
+  297                              pla
+  298                             .endm
+  299                     
+  300                     _cmpw   .macro
+  301                              pha
+  302                              cmpw   \1,\2
+  303                              pla
+  304                             .endm
+  305                     
+  306                     _tstw   .macro
+  307                              pha
+  308                              tstw   \1
+  309                              pla
+  310                             .endm
+  311                     
+  312                     _incw   .macro
+  313                              incw   \1
+  314                             .endm
+  315                     
+  316                     _decw   .macro
+  317                              pha
+  318                              decw   \1
+  319                              pla
+  320                             .endm
+  321                     
+#[3]   standard.inc
+#[4]   func.inc
+    6                             .include        "func.inc"
+    1                     ;
+    2                     ; FUNC.INC  -  MagicKit Standard Functions
+    3                     ;
+    4                     ;
+    5                     
+    6                     ; ----
+    7                     ; BATVAL - create a value for the BAT map
+    8                     ;
+    9                     ; parameters:
+   10                     ; \1 = palette (0-15)
+   11                     ; \2 = VRAM address of tile
+   12                     
+   13                     BATVAL   .func  (\1<<12)|(\2>>4)
+   14                     
+   15                     
+   16                     ; ----
+   17                     ; CHAR - create a BAT value for a character defined
+   18                     ;        using '.defchar' (uses default palette)
+   19                     ;
+   20                     ; parameters:
+   21                     ; \1 = name of character
+   22                     ;
+   23                     CHAR     .func  (PAL(\1)<<12|VRAM(\1)>>4)
+   24                     
+   25                     ; ----
+   26                     ; SPR_VRAM - return shifted value of sprite-pattern VRAM address
+   27                     ;
+   28                     ; parameters:
+   29                     ; \1 = VRAM address of sprite
+   30                     ;
+   31                     SPR_VRAM .func  (VRAM(\1)>>5)
+   32                     
+#[3]   standard.inc
+#[4]   library.inc
+    7                             .include        "library.inc"
+    1                     ;
+    2                     ; LIBRARY.INC  -  MagicKit include-interface to LIBRARY.ASM
+    3                     ;
+    4                     
+    5                     ;
+    6                     ; These MACROs are just simple one-line setups to the
+    7                     ; back-end library subroutines.  They simply setup
+    8                     ; calling parameters, and call the subroutine
+    9                     ;
+   10                     
+   11                     
+   12                     ; set video memory read and write address:
+   13                     ;
+   14                     ; setvraddr(addr)
+   15                     ; ----
+   16                     ; addr,  new address in VRAM to read at
+   17                     ;
+   18                             .macro setvraddr
+   19                              stw  #\1,<_di
+   20                              jsr  set_read
+   21                             .endm
+   22                     
+   23                     ; setvwaddr(addr)
+   24                     ; ----
+   25                     ; addr,  new address in VRAM to write at
+   26                     ;
+   27                             .macro setvwaddr
+   28                              stw  #\1,<_di
+   29                              jsr  set_write
+   30                             .endm
+   31                     
+   32                     ; set_bgpal(index, data [, nb])
+   33                     ; ----
+   34                     ; index, sub-palette index (0-15)
+   35                     ; data,  color data memory address
+   36                     ; nb,    number of sub-palette to load (optional, one by default)
+   37                     
+   38                             .macro set_bgpal
+   39                              lda   \1
+   40                              sta   <_al
+   41                             .if (\?2 = 6)
+   42                              stb   #BANK(\2),<_bl
+   43                             .else
+   44                              stb   #$FE,<_bl
+   45                             .endif
+   46                              stw   #\2,<_si
+   47                             .if \?3
+   48                              lda   \3
+   49                             .else
+   50                              lda   #1
+   51                             .endif
+   52                              sta   <_cl
+   53                              jsr   load_palette
+   54                             .endm
+   55                     
+   56                     ; set_sprpal(index, data [, nb])
+   57                     ; ----
+   58                     ; index, sub-palette index (0-15)
+   59                     ; data,  palette data memory address
+   60                     ; nb,    number of sub-palette to update (optional, one by default)
+   61                     
+   62                             .macro set_sprpal
+   63                              lda   \1
+   64                              add   #16
+   65                              sta   <_al
+   66                             .if (\?2 = 6)
+   67                              stb   #BANK(\2),<_bl
+   68                             .else
+   69                              stb   #$FE,<_bl
+   70                             .endif
+   71                              stw   #\2,<_si
+   72                             .if \?3
+   73                              lda   \3
+   74                             .else
+   75                              lda   #1
+   76                             .endif
+   77                              sta   <_cl
+   78                              jsr   load_palette
+   79                             .endm
+   80                     
+   81                     ; setcolor(index, r, g, b)
+   82                     ; ----
+   83                     ; index, color index
+   84                     ; r,     red   (0-7)
+   85                     ; g,     green (0-7)
+   86                     ; b,     blue  (0-7)
+   87                     
+   88                             .macro setcolor
+   89                              stw   \1,color_reg
+   90                              stw   #(((\3) << 6) + ((\2) << 3) + (\4)),color_data
+   91                             .endm
+   92                     
+   93                     ; vload([vram,] data, size)
+   94                     ; ----
+   95                     ; vram, VRAM base address
+   96                     ; data, video data memory address
+   97                     ; size, number of words to copy
+   98                     
+   99                             .macro vload
+  100                             .if (\# = 3)
+  101                              stw   #\1,<_di
+  102                             .if (\?2 = 6)
+  103                              stb   #BANK(\2),<_bl
+  104                             .else
+  105                              stb   #$FE,<_bl
+  106                             .endif
+  107                              stw   #\2,<_si
+  108                              stw    \3,<_cx
+  109                             .else
+  110                              stw   #VRAM(\1),<_di
+  111                              stb   #BANK(\1),<_bl
+  112                              stw   #\1,<_si
+  113                              stw   #\2,<_cx
+  114                             .endif
+  115                              jsr   load_vram
+  116                             .endm
+  117                     
+  118                     ; batcpy(vram, bat, w, h)
+  119                     ; ----
+  120                     ; vram,   VRAM base address
+  121                     ; bat,    BAT address in memory
+  122                     ; w,      nb of column to copy
+  123                     ; h,      nb of row
+  124                     
+  125                             .macro batcpy
+  126                             .if (\# = 5)
+  127                              .fail "batcpy syntax has changed, update your code!"
+  128                             .endif
+  129                              stw    \1,<_di
+  130                             .if (\?2 = 6)
+  131                              stb   #BANK(\2),<_bl
+  132                             .else
+  133                              stb   #$FE,<_bl
+  134                             .endif
+  135                              stw   #\2,<_si
+  136                              lda   \3
+  137                              sta   <_cl
+  138                              lda   \4
+  139                              sta   <_ch
+  140                              jsr   load_bat
+  141                             .endm
+  142                     
+  143                     ; setmap(map, tile, ctable, w ,h)
+  144                     ; ----
+  145                     ; map,    map base address
+  146                     ; tile,   tile vram address
+  147                     ; ctable, tile palette table address
+  148                     ; w,      map width
+  149                     ; h,      map height
+  150                     
+  151                             .macro setmap
+  152                              stw   #BANK(\1),mapbank
+  153                              stw   #\1,mapaddr
+  154                              stw   #(\2)>>4,maptilebase
+  155                              stw   #\3,mapctable
+  156                              stb   #BANK(\3),mapctablebank
+  157                              stw   \4,mapwidth
+  158                              stw   \5,mapheight
+  159                             .endm
+  160                     
+  161                     ; mapcpy(vram, x, y, w, h)
+  162                     ; ----
+  163                     ; vram, VRAM base address
+  164                     ; x,    x start coordinate in the map
+  165                     ; y,    y start coordinate
+  166                     ; w,    nb of column to copy
+  167                     ; h,    nb of row
+  168                     
+  169                             .macro mapcpy
+  170                              stw   #\1,<_di
+  171                              lda   \2
+  172                              sta   <_cl
+  173                              lda   \3
+  174                              sta   <_ch
+  175                              lda   \4
+  176                              sta   <_dl
+  177                              lda   \5
+  178                              sta   <_dh
+  179                              jsr   load_map
+  180                             .endm
+  181                     
+  182                     ; fntcpy(vram, font, color, bg, nb)
+  183                     ; ----
+  184                     ; vram,  VRAM base address
+  185                     ; font,  font address in memory
+  186                     ; color, character color
+  187                     ; bg,    bg color
+  188                     ; nb,    nb of char. to copy
+  189                     
+  190                             .macro fntcpy   
+  191                              stw   #\1,<_di
+  192                              stb   #BANK(\2),<_bl
+  193                              stw   #\2,<_si
+  194                              lda   \3
+  195                              sta   <_al
+  196                              lda   \4
+  197                              sta   <_ah
+  198                              lda   \4
+  199                              sta   <_cl
+  200                              jsr   load_font
+  201                             .endm
+  202                     
+  203                     ; scroll(num, x, y, top, bottom, cr)
+  204                     ; ----
+  205                     ; num,    scroll number (0-3)
+  206                     ; x,      BAT x position
+  207                     ; y,      BAT y position
+  208                     ; top,    screen window top
+  209                     ; bottom, screen window bottom
+  210                     ; cr,     screen window display control (bg/sp)
+  211                     
+  212                             .macro scroll
+  213                              lda   \1
+  214                              tax
+  215                              lda   LOW_BYTE  \2
+  216                              sta   scroll_xl,X
+  217                              lda   HIGH_BYTE \2
+  218                              sta   scroll_xh,X
+  219                              lda   LOW_BYTE  \3
+  220                              sta   scroll_yl,X
+  221                              lda   HIGH_BYTE \3
+  222                              sta   scroll_yh,X
+  223                              lda   \4
+  224                              sta   scroll_top,X
+  225                              lda   \5
+  226                              sta   scroll_bottom,X
+  227                              lda   \6
+  228                              ora   #$01
+  229                              sta   scroll_cr,X
+  230                             .endm
+  231                     
+#[3]   standard.inc
+#[4]   sprites.inc
+    8                             .include        "sprites.inc"
+    1                     ;
+    2                     ; SPRITES.INC  -  MagicKit sprite MACRO definitions
+    3                     ;
+    4                     
+    5                     
+    6                     ; load_sprites(vram_addr, spr_bank, #nb_group)
+    7                     ; ----
+    8                     ; vram_addr, destination address in VRAM
+    9                     ; spr_bank,  sprite bank address
+   10                     ; nb_group,  number of 32x64 patterns to copy
+   11                     
+   12                             .macro load_sprites
+   13                     
+   14                             ; put the VRAM address in _di
+   15                     
+   16                              stw   #\1,<_di
+   17                     
+   18                             ; put the sprite bank address in _si/_bl
+   19                     
+   20                              stw   #\2,<_si
+   21                              stb   #BANK(\2),<_bl
+   22                     
+   23                             ; get the number of patterns to copy, multiply it by $200 -
+   24                             ; the size in words of a 32x64 pattern (remember that
+   25                             ; 'load_vram' need a size in words), and put it in _cx
+   26                     
+   27                              lda   \3
+   28                              asl   A
+   29                              stz   <_cx
+   30                              sta   <_cx+1
+   31                     
+   32                             ; call the 'load_vram' function
+   33                     
+   34                              jsr load_vram
+   35                             .endm
+   36                     
+   37                     
+   38                     ; spr_set(#sprite, satb)
+   39                     ; ----
+   40                     ; sprite, the sprite number (0-63)
+   41                     ; satb,   the address of the SATB in RAM
+   42                     
+   43                             .macro spr_set
+   44                     
+   45                             ; multiply the sprite number by 8 (the size of a SATB entry)
+   46                             ; and put the result in _si
+   47                     
+   48                              stz   <_si+1
+   49                              lda   \1
+   50                              asl   A
+   51                              asl   A
+   52                              asl   A
+   53                              rol   <_si+1
+   54                              sta   <_si
+   55                     
+   56                             ; add the satb address to _si
+   57                     
+   58                              addw  #\2,<_si
+   59                             .endm
+   60                     
+   61                     
+   62                     ; spr_x(#x [,offset])
+   63                     ; ----
+   64                     ; x, the new x coordinate
+   65                     
+   66                             .macro spr_x
+   67                              ldy   #2
+   68                              .if (\# = 2)
+   69                               lda   LOW_BYTE \1
+   70                               clc
+   71                               adc   LOW_BYTE \2
+   72                               sta   [_si],Y
+   73                               lda   HIGH_BYTE \1
+   74                               adc   HIGH_BYTE \2
+   75                              .else
+   76                               lda   LOW_BYTE \1
+   77                               sta   [_si],Y
+   78                               lda   HIGH_BYTE \1
+   79                              .endif
+   80                              iny
+   81                              sta   [_si],Y
+   82                             .endm
+   83                     
+   84                     
+   85                     ; spr_y(#y [,offset])
+   86                     ; ----
+   87                     ; y, the new y coordinate
+   88                     
+   89                             .macro spr_y
+   90                              .if (\# = 2)
+   91                               lda   LOW_BYTE \1
+   92                               clc
+   93                               adc   LOW_BYTE \2
+   94                               sta   [_si]
+   95                               lda   HIGH_BYTE \1
+   96                               adc   HIGH_BYTE \2
+   97                              .else
+   98                               lda   LOW_BYTE \1
+   99                               sta   [_si]
+  100                               lda   HIGH_BYTE \1
+  101                              .endif
+  102                              ldy   #1
+  103                              sta   [_si],Y
+  104                             .endm
+  105                     
+  106                     
+  107                     ; spr_pattern(#addr)
+  108                     ; ----
+  109                     ; addr, address of the sprite pattern in VRAM
+  110                     
+  111                             .macro spr_pattern
+  112                              ldy   #4
+  113                              .if (\?1 = ARG_IMMED)
+  114                               lda   #LOW((\1) >> 5)
+  115                               sta   [_si],Y
+  116                               lda   #HIGH((\1) >> 5)
+  117                              .else
+  118                               lda   \1
+  119                               sta   [_si],Y
+  120                               lda   \1+1
+  121                              .endif
+  122                              iny
+  123                              sta   [_si],Y
+  124                             .endm
+  125                     
+  126                     
+  127                     ; spr_ctrl(#mask, #flag)
+  128                     ; ----
+  129                     ; mask, mask of the bits to change
+  130                     ; flag, new bit value
+  131                     
+  132                             .macro spr_ctrl
+  133                              ldy   #7
+  134                              lda   \1
+  135                              eor   #$FF
+  136                              and   [_si],Y
+  137                              ora   \2
+  138                              sta   [_si],Y
+  139                             .endm
+  140                     
+  141                     
+  142                     ; spr_pri(#flag)
+  143                     ; ----
+  144                     ; flag, new priority (1 = in foreground, 0 = in background)
+  145                     
+  146                             .macro spr_pri
+  147                              ldy   #6
+  148                              lda   [_si],Y
+  149                              and   #$7F
+  150                              ldx   \1
+  151                              beq   .x\@
+  152                              ora   #$80
+  153                     .x\@:
+  154                              sta [_si],Y
+  155                             .endm
+  156                     
+  157                     
+  158                     ; spr_pal(#index)
+  159                     ; ----
+  160                     ; index, palette index (0-15)
+  161                     
+  162                             .macro spr_pal
+  163                              ldy   #6
+  164                              lda   [_si],Y
+  165                              and   #$F0
+  166                              ora   \1
+  167                              sta   [_si],Y
+  168                             .endm
+  169                     
+  170                     
+  171                     ; init_satb(addr)
+  172                     ; ----
+  173                     ; addr, the address of the local RAM SATB
+  174                     
+  175                             .macro init_satb
+  176                              stz \1
+  177                              tii \1,\1+1,511
+  178                             .endm
+  179                     
+  180                     
+  181                     ; update_satb(satb[, addr] [,nb_sprite])
+  182                     ; ----
+  183                     ; satb,      the address of the local RAM SATB
+  184                     ; addr,      the address where to copy the SATB in VRAM ($7F00 by default)
+  185                     ; nb_sprite, number of sprite entry to copy (64 by default)
+  186                     
+  187                             .macro update_satb
+  188                              stw   #\1,<_si
+  189                              stb   #BANK(\1),<_bl
+  190                              .if (\?2)
+  191                               stw   #\2,<_di
+  192                              .else
+  193                               stw   #$7F00,<_di
+  194                              .endif
+  195                              .if (\?3)
+  196                               stw   #(\3)*4,<_cx
+  197                              .else
+  198                               stw   #$100,<_cx
+  199                              .endif
+  200                              jsr   load_vram
+  201                             .endm
+  202                     
+  203                     
+  204                     ; ----
+  205           0008      FLIP_X_MASK .equ $08
+  206           0080      FLIP_Y_MASK .equ $80
+  207           0088      FLIP_MASK   .equ $88
+  208           0031      SIZE_MASK   .equ $31
+  209                     
+  210           0000      NO_FLIP    .equ 0
+  211           0000      NO_FLIP_X  .equ 0
+  212           0000      NO_FLIP_Y  .equ 0
+  213           0008      FLIP_X     .equ $08
+  214           0080      FLIP_Y     .equ $80
+  215           0000      SIZE_16x16 .equ 0
+  216           0010      SIZE_16x32 .equ $10
+  217           0030      SIZE_16x64 .equ $30
+  218           0001      SIZE_32x16 .equ $01
+  219           0011      SIZE_32x32 .equ $11
+  220           0031      SIZE_32x64 .equ $31
+  221                     
+#[3]   standard.inc
+#[4]   vdc.inc
+    9                             .include        "vdc.inc"
+    1                     ;
+    2                     ; VDC.INC  -  MagicKit PC-Engine video MACRO definitions
+    3                     ;
+    4                     
+    5                     
+    6                     ;
+    7                     ; VREG - set up video register to be read/written
+    8                     ;
+    9                     
+   10                             .macro vreg
+   11                              lda    \1
+   12                              sta    <vdc_reg
+   13                              .if (\?1 = ARG_IMMED)
+   14                               st0   \1
+   15                              .else
+   16                               sta   video_reg
+   17                              .endif
+   18                             .endm
+   19                     
+   20                     ;
+   21                     ; SETVINC - set VRAM auto-increment step
+   22                     ;
+   23                     
+   24                             .macro setvinc
+   25                              vreg  #5
+   26                              .if (\?1 = ARG_IMMED)
+   27                               st2   \1
+   28                              .else
+   29                               lda   \1
+   30                               sta   video_data_h
+   31                              .endif
+   32                             .endm
+   33                     
+   34                             ; standard increment step
+   35                     
+   36           0000      VADDR_INC_1   = %00_000
+   37           0008      VADDR_INC_32  = %01_000
+   38           0010      VADDR_INC_64  = %10_000
+   39           0018      VADDR_INC_128 = %11_000
+   40                     
+   41                     ;
+   42                     ; SETBGMAP - set the bgmap virtual size
+   43                     ;
+   44                     
+   45                             .macro setbgmap
+   46                              lda   \1
+   47                              jsr   set_bat_size
+   48                             .endm
+   49                     
+   50                             ; standard bgmap size
+   51                     
+   52           0000      BGMAP_SIZE_32x32  = %000
+   53           0001      BGMAP_SIZE_64x32  = %001
+   54           0003      BGMAP_SIZE_128x32 = %011
+   55           0004      BGMAP_SIZE_32x64  = %100
+   56           0005      BGMAP_SIZE_64x64  = %101
+   57           0007      BGMAP_SIZE_128x64 = %111
+   58                     
+#[3]   standard.inc
+#[4]   startup.inc
+   10                             .include        "startup.inc"
+    1                     ;
+    2                     ; STARTUP.INC  -  MagicKit startup code equates and macros
+    3                     ;
+    4                     
+    5                     ; ----
+    6                     ; this block defines names for joypad
+    7                     ; direction and button bits
+    8                     
+    9           0001      JOY_I           = $01
+   10           0002      JOY_II          = $02
+   11           0004      JOY_SEL         = $04
+   12           0008      JOY_RUN         = $08
+   13           0010      JOY_UP          = $10
+   14           0020      JOY_RIGHT       = $20
+   15           0040      JOY_DOWN        = $40
+   16           0080      JOY_LEFT        = $80
+   17                     
+   18           0000      JOY_BITI        = $0
+   19           0001      JOY_BITII       = $1
+   20           0002      JOY_BITSEL      = $2
+   21           0003      JOY_BITRUN      = $3
+   22           0004      JOY_BITUP       = $4
+   23           0005      JOY_BITRT       = $5
+   24           0006      JOY_BITDN       = $6
+   25           0007      JOY_BITLT       = $7
+   26                     
+   27                     
+   28                     ; ----
+   29                     ; this block defines names for interrupt
+   30                     ; vectors
+   31                     ;
+   32           0000      IRQ2            = 0
+   33           0001      IRQ1            = 1
+   34           0002      TIMER           = 2
+   35           0003      NMI             = 3
+   36           0004      VSYNC           = 4
+   37           0005      HSYNC           = 5
+   38           0006      SOFT_RESET      = 6
+   39                     
+   40                     
+   41                     ; ----
+   42                     ; setvec(num, addr)
+   43                     ; ----
+   44                     ; num,  vector number (see defines above)
+   45                     ; addr, address of the new routine
+   46                     ; ----
+   47                     
+   48                     setvec  .macro
+   49                              lda  \1
+   50                              ldx  #LOW(\2)
+   51                              ldy  #HIGH(\2)
+   52                              jsr  set_intvec
+   53                             .endm
+   54                     
+   55                     ; ----
+   56                     ; vec_on(num)
+   57                     ; ----
+   58                     ; num, vector to enable
+   59                     ; ----
+   60                     
+   61                     vec_on  .macro
+   62                             .if (\1 = 5)
+   63                              smb  #6,<irq_m
+   64                             .else
+   65                              smb  \1,<irq_m
+   66                             .endif
+   67                             .endm
+   68                     
+   69                     ; ----
+   70                     ; vec_off(num)
+   71                     ; ----
+   72                     ; num, vector to disable
+   73                     ; ----
+   74                     
+   75                     vec_off .macro
+   76                             .if (\1 = 5)
+   77                              rmb  #6,<irq_m
+   78                             .else
+   79                              rmb  \1,<irq_m
+   80                             .endif
+   81                             .endm
+   82                     
+   83                     ; ----
+   84                     ; vsync([nb])
+   85                     ; ----
+   86                     ; nb, number of frames to be sync'ed on
+   87                     ; ----
+   88                     
+   89                     vsync   .macro
+   90                             .if (\# = 0)
+   91                              lda #1
+   92                             .else
+   93                              lda \1
+   94                             .endif
+   95                              jsr  wait_vsync
+   96                             .endm
+   97                     
+   98                     
+#[3]   standard.inc
+   11                     
+#[2]   startup.asm
+   10           0000                      .ifdef HUC
+   13                                     .endif
+   14                     
+   15                     ; ----
+   16                     ; setup flexible boundaries for startup code
+   17                     ; and user program's "main".
+   18                     ;
+   19           0000      START_BANK      .equ    0
+   20           0000                     .ifdef HUC
+   24                                    .else
+   25           0001      MAIN_BANK       .equ    START_BANK+1
+   26                                    .endif
+   27                     
+   28                     ; ----
+   29                     ; system variables
+   30                     ;
+   31           2200                      .bss
+   32           2200                      .org    $2200
+   33  --:2200            user_jmptbl:            ; user interrupt vectors
+   34  --:2200            irq2_jmp:       .ds 2   ; IRQ2 (BRK instruction and external IRQ)
+   35  --:2202            irq1_jmp:       .ds 2   ; IRQ1 (VDC interrupt)
+   36  --:2204            timer_jmp:      .ds 2   ; TIMER
+   37  --:2206            nmi_jmp:        .ds 2   ; NMI (unused)
+   38  --:2208            vsync_hook:     .ds 2   ; VDC vertical sync routine
+   39  --:220A            hsync_hook:     .ds 2   ; VDC horizontal sync rountine
+   40  --:220C            bg_x1:          .ds 2
+   41  --:220E            bg_x2:          .ds 2
+   42  --:2210            bg_y1:          .ds 2
+   43  --:2212            bg_y2:          .ds 2
+   44                     
+   45           2227                      .org    $2227
+   46  --:2227            joyena:         .ds 1   ; soft reset enable (bit 0/pad 1, bit 1/pad2, etc.)
+   47  --:2228            joy:            .ds 5   ; 'current' pad values (pad #1-5)
+   48  --:222D            joytrg:         .ds 5   ; 'delta' pad values (new keys hit)
+   49  --:2232            joyold:         .ds 5   ; 'previous' pad values
+   50                     
+   51           2241                      .org    $2241
+   52  --:2241            irq_cnt:        .ds 1   ; VDC interrupt counter; increased 60 times per second
+   53  --:2242            vdc_mwr:        .ds 1
+   54  --:2243            vdc_dcr:        .ds 1
+   55                     
+   56           2284                      .org    $2284
+   57  --:2284            soft_reset:     .ds 2   ; soft reset jump loc (run+select)
+   58                     
+   59           2680                      .org    $2680
+   60  --:2680            vsync_cnt:      .ds 1   ; counter for 'wait_vsync' routine
+   61  --:2681            joydlta:        .ds 5   ; latched 'delta' pad values (new keys hit)
+   62  --:2686            joyprev:        .ds 5   ; latched 'previous' pad values
+   63  --:268B            joybuf:         .ds 5   ; 'delta' pad values collector
+   64  --:2690            joyhook:        .ds 2   ; 'read_joypad' routine hook
+   65  --:2692            joycallback:    .ds 6   ; joypad enhanced callback support
+   66  --:2698            disp_cr:        .ds 1   ; display control (1 = on, 0 = off)
+   67  --:2699            time:           .ds 3   ; system time (~100 ticks per second)
+   68                     
+   69                     
+   70                     ;±±±[ STARTUP CODE ]±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+   71                     
+   72           E000              .code
+   73           0000              .bank START_BANK
+   74                     
+   75                         ; ----
+   76                         ; interrupt vectors
+   77                     
+   78           FFF6              .org  $FFF6
+   79                     
+   80  00:FFF6  9F E0             .dw _irq2
+   81  00:FFF8  A6 E0             .dw _irq1
+   82  00:FFFA  17 E2             .dw _timer
+   83  00:FFFC  29 E2             .dw _nmi
+   84  00:FFFE  10 E0             .dw _reset
+   85                     
+   86                         ; ----
+   87                         ; develo startup code
+   88                     
+   89           0000             .if (DEVELO)
+   99                            .endif
+  100                     
+  101                     ; ----
+  102                     ; reset
+  103                     ; ----
+  104                     ; things start here
+  105                     ; ----
+  106                     
+  107           E010              .org  $E010
+  108  00:E010            _reset:
+  109  00:E010  78                sei                     ; disable interrupts 
+  110  00:E011  D4                csh                     ; select the 7.16 MHz clock
+  111  00:E012  D8                cld                     ; clear the decimal flag 
+  112  00:E013  A2 FF             ldx   #$FF              ; initialize the stack pointer
+  113  00:E015  9A                txs 
+  114  00:E016  A9 FF             lda   #$FF              ; map the I/O bank in the first page
+  115  00:E018  53 01             tam   #0
+  116  00:E01A  A9 F8             lda   #$F8              ; and the RAM bank in the second page
+  117  00:E01C  53 02             tam   #1
+  118  00:E01E  9C 00 20          stz   $2000             ; clear all the RAM
+  119  00:E021  73 00 20          tii   $2000,$2001,$1FFF
+       00:E024  01 20 FF  
+       00:E027  1F        
+  120                     
+  121                         ; ----
+  122                         ; initialize the hardware
+  123                     
+  124  00:E028  9C 01 0C          stz   timer_ctrl        ; init timer
+  125  00:E02B  20 3D E6          jsr   init_psg          ; init sound
+  126  00:E02E  20 71 E5          jsr   init_vdc          ; init video
+  127  00:E031  A9 1F             lda   #$1F              ; init joypad
+  128  00:E033  8D 27 22          sta   joyena
+  129                     
+  130                         ; ----
+  131                         ; initialize interrupt vectors
+  132                     
+  133  00:E036  A2 04             ldx   #4                ; user vector table
+  134  00:E038  C2                cly
+  135  00:E039  A9 9E     .l2:    lda   #LOW(_rti)
+  136  00:E03B  99 00 22          sta   user_jmptbl,Y
+  137  00:E03E  C8                iny
+  138  00:E03F  A9 E0             lda   #HIGH(_rti)
+  139  00:E041  99 00 22          sta   user_jmptbl,Y
+  140  00:E044  C8                iny
+  141  00:E045  CA                dex
+  142  00:E046  D0 F1             bne   .l2
+  143                     
+  144                             stw   #_reset,soft_reset ; soft reset
+       00:E048  A9 10              lda    LOW_BYTE #_reset
+       00:E04A  8D 84 22           sta    LOW_BYTE soft_reset
+       00:E04D  A9 E0              lda    HIGH_BYTE #_reset
+       00:E04F  8D 85 22           sta    HIGH_BYTE soft_reset
+  145                             stw   #_rts,vsync_hook   ; user vsync routine
+       00:E052  A9 9D              lda    LOW_BYTE #_rts
+       00:E054  8D 08 22           sta    LOW_BYTE vsync_hook
+       00:E057  A9 E0              lda    HIGH_BYTE #_rts
+       00:E059  8D 09 22           sta    HIGH_BYTE vsync_hook
+  146                             stw   #_rts,hsync_hook   ; user hsync routine
+       00:E05C  A9 9D              lda    LOW_BYTE #_rts
+       00:E05E  8D 0A 22           sta    LOW_BYTE hsync_hook
+       00:E061  A9 E0              lda    HIGH_BYTE #_rts
+       00:E063  8D 0B 22           sta    HIGH_BYTE hsync_hook
+  147                     
+  148  00:E066  A9 01             lda   #$01               ; enable interrupts
+  149  00:E068  8D 02 14          sta   $1402
+  150  00:E06B  9C 03 14          stz   $1403
+  151  00:E06E  58                cli
+  152                     
+  153                         ; ----
+  154                         ; enable display and VSYNC interrupt
+  155                     
+  156                             vreg  #5
+       00:E06F  A9 05              lda    #5
+       00:E071  85 F7              sta    <vdc_reg
+                0001               .if (2 = ARG_IMMED)
+       00:E073  03 05               st0   #5
+                                   .else
+                                   .endif
+  157  00:E075  A9 C8             lda   #$C8
+  158  00:E077  85 F3             sta  <vdc_crl
+  159  00:E079  8D 02 00          sta   video_data_l
+  160  00:E07C  23 00             st2   #$00
+  161  00:E07E  A9 01             lda   #$01
+  162  00:E080  8D 98 26          sta   disp_cr
+  163                     
+  164                         ; ----
+  165                         ; init random number generator
+  166                     
+  167                             stw   #$4BE7,<_cx       ; set random seed
+       00:E083  A9 E7              lda    LOW_BYTE #$4BE7
+       00:E085  85 FC              sta    LOW_BYTE <_cx
+       00:E087  A9 4B              lda    HIGH_BYTE #$4BE7
+       00:E089  85 FD              sta    HIGH_BYTE <_cx
+  168                             stw   #$91D8,<_dx
+       00:E08B  A9 D8              lda    LOW_BYTE #$91D8
+       00:E08D  85 FE              sta    LOW_BYTE <_dx
+       00:E08F  A9 91              lda    HIGH_BYTE #$91D8
+       00:E091  85 FF              sta    HIGH_BYTE <_dx
+  169  00:E093  20 F8 E7          jsr   srand
+  170                     
+  171                         ; ----
+  172                         ; load font
+  173                     
+  174           0000             .ifdef HUC
+  179                            .endif
+  180                     
+  181                         ; ----
+  182                         ; jump to main routine
+  183                     
+  184           0000             .ifdef HUC
+  193                            .else
+  194                             map   main
+       00:E096  A9 01              lda   #bank(main)        ; addressable memory
+       00:E098  53 40              tam   #page(main)
+  195  00:E09A  4C 00 C0          jmp   main
+  196                            .endif
+  197                     
+  198                     ; ----
+  199                     ; system
+  200                     ; ----
+  201                     ; give back control to the Develo system
+  202                     ; ----
+  203                     
+  204           0000             .if (DEVELO)
+  240                            .endif
+  241                     
+  242                     ;±±±[ INTERRUPT CODE ]±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+  243                     
+  244  00:E09D            _rts:
+  245  00:E09D  60                rts
+  246  00:E09E            _rti:
+  247  00:E09E  40                rti
+  248                     
+  249                     ; ----
+  250                     ; irq2
+  251                     ; ----
+  252                     ; IRQ2 interrupt handler
+  253                     ; ----
+  254                     
+  255  00:E09F            _irq2:
+  256  00:E09F  8F F5 01          bbs0 <irq_m,.user
+  257  00:E0A2  40                rti
+  258  00:E0A3            .user:
+  259  00:E0A3  6C 00 22          jmp   [irq2_jmp]
+  260                     
+  261                     ; ----
+  262                     ; irq1
+  263                     ; ----
+  264                     ; VDC interrupt handler
+  265                     ; ----
+  266                     
+  267  00:E0A6            _irq1:
+  268  00:E0A6  9F F5 7C          bbs1 <irq_m,.user_irq1  ; jump to the user irq1 vector
+  269                             ; --
+  270  00:E0A9  48                pha                     ; save registers
+  271  00:E0AA  DA                phx
+  272  00:E0AB  5A                phy
+  273                             ; --
+  274  00:E0AC  AD 00 00          lda   video_reg         ; get VDC status register
+  275  00:E0AF  85 F6             sta  <vdc_sr            ; save a copy
+  276                     
+  277                         ; ----
+  278                         ; vsync interrupt
+  279                         ;
+  280  00:E0B1            .vsync:
+  281  00:E0B1  5F F6 41          bbr5 <vdc_sr,.hsync
+  282                             ; --
+  283  00:E0B4  EE 41 22          inc   irq_cnt           ; increment IRQ counter
+  284                             ; --
+  285  00:E0B7  03 05             st0   #5                ; update display control (bg/sp)
+  286  00:E0B9  A5 F3             lda  <vdc_crl
+  287  00:E0BB  8D 02 00          sta   video_data_l
+  288                             ; --
+  289  00:E0BE  DF F5 2E          bbs5 <irq_m,.l3
+  290                             ; --
+  291  00:E0C1  AE 98 26          ldx   disp_cr           ; check display state (on/off)
+  292  00:E0C4  D0 07             bne  .l1
+  293  00:E0C6  29 3F             and   #$3F              ; disable display
+  294  00:E0C8  8D 02 00          sta   video_data_l
+  295  00:E0CB  80 03             bra  .l2
+  296                             ; --    
+  297  00:E0CD  20 83 E1  .l1:    jsr  .rcr_init          ; init display list
+  298  00:E0D0  03 07     .l2:    st0   #7                ; scrolling
+  299                             stw   bg_x1,video_data
+       00:E0D2  AD 0C 22           lda    LOW_BYTE bg_x1
+       00:E0D5  8D 02 00           sta    LOW_BYTE video_data
+       00:E0D8  AD 0D 22           lda    HIGH_BYTE bg_x1
+       00:E0DB  8D 03 00           sta    HIGH_BYTE video_data
+  300  00:E0DE  03 08             st0   #8
+  301                             stw   bg_y1,video_data
+       00:E0E0  AD 10 22           lda    LOW_BYTE bg_y1
+       00:E0E3  8D 02 00           sta    LOW_BYTE video_data
+       00:E0E6  AD 11 22           lda    HIGH_BYTE bg_y1
+       00:E0E9  8D 03 00           sta    HIGH_BYTE video_data
+  302  00:E0EC  20 2F E9          jsr   read_joypad       ; read joypad
+  303                             ; --
+  304  00:E0EF  4F F5 03  .l3:    bbr4 <irq_m,.l4
+  305  00:E0F2  20 2B E1          jsr  .user_vsync        ; call user vsync routine
+  306  00:E0F5            .l4:
+  307                         ; ----
+  308                         ; hsync interrupt
+  309                         ;
+  310  00:E0F5            .hsync:
+  311  00:E0F5  2F F6 24          bbr2 <vdc_sr,.exit
+  312  00:E0F8  6F F5 33          bbr6 <irq_m,.rcr_sys
+  313  00:E0FB  FF F5 1C          bbs7 <irq_m,.l5
+  314                             ; --
+  315  00:E0FE  03 07             st0   #7                ; scrolling
+  316                             stw   bg_x2,video_data
+       00:E100  AD 0E 22           lda    LOW_BYTE bg_x2
+       00:E103  8D 02 00           sta    LOW_BYTE video_data
+       00:E106  AD 0F 22           lda    HIGH_BYTE bg_x2
+       00:E109  8D 03 00           sta    HIGH_BYTE video_data
+  317  00:E10C  03 08             st0   #8
+  318                             stw   bg_y2,video_data
+       00:E10E  AD 12 22           lda    LOW_BYTE bg_y2
+       00:E111  8D 02 00           sta    LOW_BYTE video_data
+       00:E114  AD 13 22           lda    HIGH_BYTE bg_y2
+       00:E117  8D 03 00           sta    HIGH_BYTE video_data
+  319                             ; --
+  320  00:E11A  44 0C     .l5:    bsr  .user_hsync        ; call user handler
+  321                     
+  322                         ; ----
+  323                         ; exit interrupt
+  324                         ;
+  325  00:E11C            .exit:
+  326  00:E11C  A5 F7             lda  <vdc_reg           ; restore VDC register index
+  327  00:E11E  8D 00 00          sta   video_reg
+  328                             ; --
+  329  00:E121  7A                ply
+  330  00:E122  FA                plx
+  331  00:E123  68                pla
+  332  00:E124  40                rti
+  333                     
+  334                         ; ----
+  335                         ; user routine hooks
+  336                         ;
+  337  00:E125            .user_irq1:
+  338  00:E125  6C 02 22          jmp   [irq1_jmp]
+  339  00:E128            .user_hsync:
+  340  00:E128  6C 0A 22          jmp   [hsync_hook]
+  341  00:E12B            .user_vsync:
+  342  00:E12B  6C 08 22          jmp   [vsync_hook]
+  343                     
+  344                         ; ----
+  345                         ; hsync scrolling handler
+  346                         ;
+  347  00:E12E            .rcr_sys:
+  348  00:E12E  AC D1 26          ldy   s_idx
+  349  00:E131  10 15             bpl  .r1
+  350                             ; --
+  351  00:E133  A5 F3             lda  <vdc_crl
+  352  00:E135  29 3F             and   #$3F
+  353  00:E137  85 F3             sta  <vdc_crl
+  354  00:E139  9C D1 26          stz   s_idx
+  355  00:E13C  AE 0B 27          ldx   s_list
+  356  00:E13F  BD FA 26          lda   s_top,X
+  357  00:E142  20 DD E1          jsr  .r5
+  358  00:E145  4C 1C E1          jmp  .exit
+  359                             ; --
+  360  00:E148  BE 0B 27  .r1:    ldx   s_list,Y
+  361  00:E14B  A5 F3             lda  <vdc_crl
+  362  00:E14D  29 3F             and   #$3F
+  363  00:E14F  1D F2 26          ora   s_cr,X
+  364  00:E152  85 F3             sta  <vdc_crl
+  365                             ; --
+  366  00:E154  20 B7 E1          jsr  .rcr_set
+  367                             ; --
+  368  00:E157  BD FA 26          lda   s_top,X
+  369  00:E15A  C9 FF             cmp   #$FF
+  370  00:E15C  F0 BE             beq  .exit
+  371                             ; --
+  372  00:E15E  03 07             st0   #7
+  373  00:E160  BD D2 26          lda   s_xl,X
+  374  00:E163  BC DA 26          ldy   s_xh,X
+  375  00:E166  8D 02 00          sta   video_data_l
+  376  00:E169  8C 03 00          sty   video_data_h
+  377  00:E16C  03 08             st0   #8
+  378  00:E16E  BD E2 26          lda   s_yl,X
+  379  00:E171  BC EA 26          ldy   s_yh,X
+  380                             sub   #1
+                0000              .if (1 = 2)            ; from register A (handle
+                                  .else
+       00:E174  38                 sec
+       00:E175  E9 01              sbc    #1
+                                  .endif
+  381  00:E177  B0 01             bcs  .r2
+  382  00:E179  88                dey
+  383  00:E17A  8D 02 00  .r2:    sta   video_data_l
+  384  00:E17D  8C 03 00          sty   video_data_h
+  385  00:E180  4C 1C E1          jmp  .exit
+  386                     
+  387                         ; ----
+  388                         ; init display list
+  389                         ;
+  390  00:E183            .rcr_init:
+  391  00:E183  20 62 E6          jsr   build_disp_list
+  392  00:E186  B0 01             bcs   .r3
+  393  00:E188  60                rts
+  394                             ; --
+  395  00:E189  F7 F3     .r3:    smb   #7,<vdc_crl
+  396  00:E18B  A9 FF             lda   #$FF
+  397  00:E18D  8D D1 26          sta   s_idx
+  398  00:E190  AE 0B 27          ldx   s_list
+  399  00:E193  BC FA 26          ldy   s_top,X
+  400  00:E196  C0 FF             cpy   #$FF
+  401  00:E198  D0 43             bne   .r5
+  402                             ; --
+  403  00:E19A  BC D2 26          ldy   s_xl,X
+  404  00:E19D  8C 0C 22          sty   bg_x1
+  405  00:E1A0  BC DA 26          ldy   s_xh,X
+  406  00:E1A3  8C 0D 22          sty   bg_x1+1
+  407  00:E1A6  BC E2 26          ldy   s_yl,X
+  408  00:E1A9  8C 10 22          sty   bg_y1
+  409  00:E1AC  BC EA 26          ldy   s_yh,X
+  410  00:E1AF  8C 11 22          sty   bg_y1+1
+  411  00:E1B2  9C D1 26          stz   s_idx
+  412  00:E1B5  80 26             bra   .r5
+  413                     
+  414                         ; ----
+  415                         ; program scanline interrupt
+  416                         ;
+  417  00:E1B7            .rcr_set:
+  418  00:E1B7  C8                iny
+  419  00:E1B8  8C D1 26          sty   s_idx
+  420  00:E1BB  B9 0B 27          lda   s_list,Y
+  421  00:E1BE  A8                tay
+  422  00:E1BF  B9 FA 26          lda   s_top,Y
+  423  00:E1C2  CD B4 26          cmp   scr_height
+  424                             bhs  .r6
+       00:E1C5  B0 26              bcs    .r6
+  425  00:E1C7  DD 03 27          cmp   s_bottom,X
+  426                             blo  .r5
+       00:E1CA  90 11              bcc    .r5
+  427                             ; --
+  428  00:E1CC  BD 03 27          lda   s_bottom,X
+  429  00:E1CF  3A        .r4:    dec   A
+  430  00:E1D0  48                pha
+  431  00:E1D1  A9 F0             lda   #$F0
+  432  00:E1D3  9D 03 27          sta   s_bottom,X
+  433  00:E1D6  9E F2 26          stz   s_cr,X
+  434  00:E1D9  CE D1 26          dec   s_idx
+  435  00:E1DC  68                pla
+  436                             ; --
+  437  00:E1DD  03 06     .r5:    st0   #6                ; set scanline counter
+  438                             add   #64
+                0000              .if (1 = 2)            ; register A (handle carry
+                                  .else
+       00:E1DF  18                 clc
+       00:E1E0  69 40              adc    #64
+                                  .endif
+  439  00:E1E2  8D 02 00          sta   video_data_l
+  440  00:E1E5  62                cla
+  441  00:E1E6  69 00             adc   #0
+  442  00:E1E8  8D 03 00          sta   video_data_h
+  443  00:E1EB  80 0E             bra   __rcr_on
+  444                             ;--
+  445  00:E1ED  BD 03 27  .r6:    lda   s_bottom,X
+  446  00:E1F0  CD B4 26          cmp   scr_height
+  447                             blo  .r4
+       00:E1F3  90 DA              bcc    .r4
+  448  00:E1F5  80 14             bra   __rcr_off
+  449                     
+  450                     ; ----
+  451                     ; rcr_on
+  452                     ; ----
+  453                     ; enable scanline interrupt
+  454                     ; ----
+  455                     
+  456  00:E1F7              rcr_on:
+  457  00:E1F7             _rcr_on:
+  458  00:E1F7  A9 05             lda   #5
+  459  00:E1F9  85 F7             sta  <vdc_reg
+  460  00:E1FB            __rcr_on:
+  461  00:E1FB  03 05             st0   #5
+  462  00:E1FD  A5 F3             lda  <vdc_crl
+  463  00:E1FF  09 04             ora   #$04
+  464  00:E201  85 F3             sta  <vdc_crl
+  465  00:E203  8D 02 00          sta   video_data_l
+  466  00:E206  60                rts
+  467                     
+  468                     ; ----
+  469                     ; rcr_off
+  470                     ; ----
+  471                     ; disable scanline interrupt
+  472                     ; ----
+  473                     
+  474  00:E207              rcr_off:
+  475  00:E207             _rcr_off:
+  476  00:E207  A9 05             lda   #5
+  477  00:E209  85 F7             sta  <vdc_reg
+  478  00:E20B            __rcr_off:
+  479  00:E20B  03 05             st0   #5
+  480  00:E20D  A5 F3             lda  <vdc_crl
+  481  00:E20F  29 FB             and   #$FB
+  482  00:E211  85 F3             sta  <vdc_crl
+  483  00:E213  8D 02 00          sta   video_data_l
+  484  00:E216  60                rts
+  485                     
+  486                     ; ----
+  487                     ; timer
+  488                     ; ----
+  489                     ; timer interrupt handler
+  490                     ; ----
+  491                     
+  492  00:E217            _timer:
+  493  00:E217  AF F5 0C          bbs2 <irq_m,.user
+  494                             incw  time
+       00:E21A  EE 99 26           inc    time              ; value at stated memory
+       00:E21D  D0 03              bne    .x_00017           ; location
+       00:E21F  EE 9A 26           inc    time+1
+       00:E222            .x_00017:
+  495  00:E222  9C 03 14          stz   $1403
+  496  00:E225  40                rti
+  497  00:E226            .user:
+  498  00:E226  6C 04 22          jmp   [timer_jmp]
+  499                     
+  500                     ; ----
+  501                     ; nmi
+  502                     ; ----
+  503                     ; NMI interrupt handler
+  504                     ; ----
+  505                     
+  506  00:E229            _nmi:
+  507  00:E229  BF F5 01          bbs3 <irq_m,.user
+  508  00:E22C  40                rti
+  509  00:E22D            .user:
+  510  00:E22D  6C 06 22          jmp   [nmi_jmp]
+  511                     
+  512                     
+  513                     ;±±[ DATA ]±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+  514                     
+  515                     ; ----
+  516                     ; font
+  517                     ; ----
+  518                     
+  519           0000              .ifdef HUC
+  532                             .endif
+  533                     
+  534                     
+  535                     ;±±[ LIBRARY ]±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+  536                     
+  537                     ; ----
+  538                     ; standard library
+  539                     ; ----
+  540                     
+  541           0000             .ifdef HUC
+  549                            .else
+#[3]   library.asm
+  550                             .include "library.asm"
+    1                     ;
+    2                     ; LIBRARY.ASM  -  MagicKit Standard Library
+    3                     ;
+    4                     ;
+    5                     
+    6                     ; IMPORTANT NOTE:
+    7                     ; ----
+    8                     ; almost all the library functions have been changed to automaticaly
+    9                     ; handle bank mapping (you don't have to map data yourself anymore),
+   10                     ; the change will be transparent to you if you were using only library
+   11                     ; macros to call functions, but you will have to update your code
+   12                     ; in case you were directly calling those functions!
+   13                     
+   14                     
+   15                     ; ----
+   16                     ; map_data
+   17                     ; ----
+   18                     ; map data in page 3-4 ($6000-$9FFF)
+   19                     ; ----
+   20                     ; IN :  _BL = data bank
+   21                     ;       _SI = data address
+   22                     ; ----
+   23                     ; OUT:  _BX = old banks
+   24                     ;       _SI = remapped data address
+   25                     ; ----
+   26                     
+   27  00:E230            map_data:
+   28  00:E230  A6 FA             ldx   <_bl
+   29                     
+   30                         ; ----
+   31                         ; save current bank mapping
+   32                         ;
+   33  00:E232  43 08             tma   #3
+   34  00:E234  85 FA             sta   <_bl
+   35  00:E236  43 10             tma   #4
+   36  00:E238  85 FB             sta   <_bh
+   37                             ; --
+   38  00:E23A  E0 FE             cpx   #$FE
+   39  00:E23C  D0 03             bne   .l1
+   40                             ; --
+   41  00:E23E  86 EC             stx   <_bp
+   42  00:E240  60                rts
+   43                     
+   44                         ; ----
+   45                         ; map new bank
+   46                         ;
+   47  00:E241  64 EC     .l1:    stz   <_bp
+   48                             ; --
+   49  00:E243  8A                txa
+   50  00:E244  53 08             tam   #3
+   51  00:E246  1A                inc   A
+   52  00:E247  53 10             tam   #4
+   53                     
+   54                         ; ----
+   55                         ; remap data address to page 3
+   56                         ;
+   57  00:E249  A5 EF             lda   <_si+1
+   58  00:E24B  29 1F             and   #$1F
+   59  00:E24D  09 60             ora   #$60
+   60  00:E24F  85 EF             sta   <_si+1
+   61  00:E251  60                rts
+   62                     
+   63                     
+   64                     ; ----
+   65                     ; unmap_data
+   66                     ; ----
+   67                     ; IN :  _BX = old banks
+   68                     ; ----
+   69                     
+   70  00:E252            unmap_data:
+   71                     
+   72  00:E252  A5 FA             lda     <_bl
+   73  00:E254  53 08             tam     #3
+   74  00:E256  A5 FB             lda     <_bh
+   75  00:E258  53 10             tam     #4
+   76  00:E25A  60                rts
+   77                     
+   78                     ; ----
+   79                     ; remap_data
+   80                     ; ----
+   81                     
+   82  00:E25B            remap_data:
+   83  00:E25B  A5 EC             lda   <_bp
+   84  00:E25D  D0 10             bne   .l1
+   85  00:E25F  A5 EF             lda   <_si+1
+   86  00:E261  10 0C             bpl   .l1
+   87                             sub   #$20
+                0000              .if (1 = 2)            ; from register A (handle
+                                  .else
+       00:E263  38                 sec
+       00:E264  E9 20              sbc    #$20
+                                  .endif
+   88  00:E266  85 EF             sta   <_si+1
+   89  00:E268  43 10             tma   #4
+   90  00:E26A  53 08             tam   #3
+   91  00:E26C  1A                inc   A
+   92  00:E26D  53 10             tam   #4
+   93  00:E26F            .l1:
+   94  00:E26F  60                rts
+   95                     
+   96                     
+   97                     ; ----
+   98                     ; load_palette
+   99                     ; ----
+  100                     ; initialize one or more sub-palette
+  101                     ; ----
+  102                     ; IN :  _AL = index of the first sub-palette (0-31)
+  103                     ;       _BL = data bank
+  104                     ;       _SI = address of data
+  105                     ;       _CL = number of sub-palette to copy
+  106                     ; ----
+  107                     
+  108           0000              .ifdef HUC
+  110                             .endif
+  111  00:E270             load_palette:
+  112                     
+  113                         ; ----
+  114                         ; map data
+  115                         ;
+  116  00:E270  20 30 E2          jsr   map_data
+  117                     
+  118                         ; ----
+  119                         ; multiply the sub-palette index by 16
+  120                         ; and set the VCE color index register
+  121                         ;
+  122  00:E273  A5 F8             lda   <_al
+  123  00:E275  64 F9             stz   <_ah
+  124  00:E277  0A                asl   A
+  125  00:E278  0A                asl   A
+  126  00:E279  0A                asl   A
+  127  00:E27A  0A                asl   A
+  128  00:E27B  26 F9             rol   <_ah
+  129  00:E27D  8D 02 04          sta   color_reg_l
+  130  00:E280  A5 F9             lda   <_ah
+  131  00:E282  8D 03 04          sta   color_reg_h
+  132                     
+  133                         ; ----
+  134                         ; load new colors
+  135                         ;
+  136  00:E285  C2                cly
+  137  00:E286            .loop_a:
+  138  00:E286  A2 10             ldx   #16
+  139  00:E288            .loop_b:
+  140  00:E288  B1 EE             lda   [_si],Y           ; set color
+  141  00:E28A  C8                iny
+  142  00:E28B  8D 04 04          sta   color_data_l
+  143  00:E28E  B1 EE             lda   [_si],Y
+  144  00:E290  8D 05 04          sta   color_data_h
+  145  00:E293  C8                iny
+  146  00:E294  D0 02             bne   .next
+  147  00:E296  E6 EF             inc   <_si+1
+  148  00:E298  CA        .next:  dex                     ; next color
+  149  00:E299  D0 ED             bne   .loop_b
+  150                     
+  151  00:E29B  C6 FC             dec   <_cl              ; next sub-palette
+  152  00:E29D  D0 E7             bne   .loop_a
+  153                     
+  154                         ; ----
+  155                         ; unmap data
+  156                         ;
+  157  00:E29F  4C 52 E2          jmp   unmap_data
+  158                     
+  159                     
+  160                     ; ----
+  161                     ; load_bat
+  162                     ; ----
+  163                     ; transfer a BAT in VRAM
+  164                     ; ----
+  165                     ; IN :  _DI = VRAM base address
+  166                     ;       _BL = BAT bank
+  167                     ;       _SI = BAT memory location
+  168                     ;       _CL = nb of column to copy
+  169                     ;       _CH = nb of row
+  170                     ; ----
+  171                     
+  172           0000              .ifdef HUC
+  174                             .endif
+  175  00:E2A2             load_bat:
+  176                     
+  177                         ; ----
+  178                         ; map data
+  179                         ;
+  180  00:E2A2  20 30 E2          jsr   map_data
+  181                     
+  182                         ; ----
+  183                         ; copy BAT
+  184                         ;
+  185  00:E2A5  C2                cly
+  186                             ; --
+  187  00:E2A6  20 35 E5  .l1:    jsr   set_write
+  188  00:E2A9  A6 FC             ldx   <_cl
+  189                             ; --
+  190  00:E2AB  B1 EE     .l2:    lda   [_si],Y
+  191  00:E2AD  8D 02 00          sta   video_data_l
+  192  00:E2B0  C8                iny
+  193  00:E2B1  B1 EE             lda   [_si],Y
+  194  00:E2B3  8D 03 00          sta   video_data_h
+  195  00:E2B6  C8                iny
+  196  00:E2B7  D0 02             bne   .l3
+  197  00:E2B9  E6 EF             inc   <_si+1
+  198  00:E2BB  CA        .l3:    dex
+  199  00:E2BC  D0 ED             bne   .l2
+  200                             ; --
+  201  00:E2BE  20 5B E2          jsr   remap_data
+  202                             ; --
+  203                             addw  bat_width,<_di
+                0000              .if     (2 = 3)
+                                  .else
+                                   ; 2-arg mode
+                                   ;
+       00:E2C1  18                 clc
+       00:E2C2  A5 F0              lda    LOW_BYTE <_di
+       00:E2C4  6D AE 26           adc    LOW_BYTE bat_width
+       00:E2C7  85 F0              sta    LOW_BYTE <_di
+       00:E2C9  A5 F1              lda    HIGH_BYTE <_di
+       00:E2CB  6D AF 26           adc    HIGH_BYTE bat_width
+       00:E2CE  85 F1              sta    HIGH_BYTE <_di
+                                  .endif
+  204  00:E2D0  C6 FD             dec   <_ch
+  205  00:E2D2  D0 D2             bne   .l1
+  206                     
+  207                         ; ----
+  208                         ; unmap data
+  209                         ;
+  210  00:E2D4  4C 52 E2          jmp   unmap_data
+  211                     
+  212                     
+  213                     ; ----
+  214                     ; load_map
+  215                     ; ----
+  216                     ; transfer a tiled map in VRAM
+  217                     ; ----
+  218                     ; IN :  _DI = VRAM base address
+  219                     ;       _CL = x start coordinate in the map
+  220                     ;       _CH = y start coordinate
+  221                     ;       _DL = nb of column to copy
+  222                     ;       _DH = nb of row
+  223                     ; ----
+  224                     
+  225           269C                    .bss
+  226  --:269C            mapbank       .ds 1
+  227  --:269D            mapaddr       .ds 2
+  228  --:269F            mapwidth      .ds 2
+  229  --:26A1            mapheight     .ds 2
+  230  --:26A3            maptilebank   .ds 1
+  231  --:26A4            maptileaddr   .ds 2
+  232  --:26A6            maptilebase   .ds 2
+  233  --:26A8            mapnbtile     .ds 2
+  234  --:26AA            mapctablebank .ds 1
+  235  --:26AB            mapctable     .ds 2
+  236  --:26AD            mapwrap       .ds 1
+  237           E2D7                    .code
+  238  00:E2D7            load_map:
+  239                     
+  240                         ; ----
+  241                         ; save bank mapping
+  242                         ;
+  243  00:E2D7  43 04             tma   #2
+  244  00:E2D9  48                pha
+  245  00:E2DA  43 08             tma   #3
+  246  00:E2DC  48                pha
+  247  00:E2DD  43 10             tma   #4
+  248  00:E2DF  48                pha
+  249  00:E2E0  43 20             tma   #5
+  250  00:E2E2  48                pha
+  251                     
+  252                         ; ----
+  253                         ; calculate map address
+  254                         ;
+  255                             stw   mapctable,<_bp
+       00:E2E3  AD AB 26           lda    LOW_BYTE mapctable
+       00:E2E6  85 EC              sta    LOW_BYTE <_bp
+       00:E2E8  AD AC 26           lda    HIGH_BYTE mapctable
+       00:E2EB  85 ED              sta    HIGH_BYTE <_bp
+  256                             stb   mapaddr,<_si
+       00:E2ED  AD 9D 26           lda    mapaddr
+       00:E2F0  85 EE              sta    <_si
+  257  00:E2F2  AD 9E 26          lda   mapaddr+1
+  258  00:E2F5  29 1F             and   #$1F
+  259  00:E2F7  85 EF             sta   <_si+1
+  260                             ; --
+  261  00:E2F9  A6 FC             ldx   <_cl
+  262  00:E2FB  86 F9             stx   <_ah
+  263  00:E2FD  A4 FD             ldy   <_ch
+  264  00:E2FF  84 FB             sty   <_bh
+  265                             ; --
+  266  00:E301  AD A0 26          lda   mapwidth+1
+  267  00:E304  F0 08             beq   .l1
+  268  00:E306  98                tya
+  269                             add   <_si+1
+                0000              .if (1 = 2)            ; register A (handle carry
+                                  .else
+       00:E307  18                 clc
+       00:E308  65 EF              adc    <_si+1
+                                  .endif
+  270  00:E30A  85 EF             sta   <_si+1
+  271  00:E30C  80 17             bra   .l2
+  272                             ; --
+  273  00:E30E  84 F8     .l1:    sty   <_al
+  274  00:E310  AD 9F 26          lda   mapwidth
+  275  00:E313  85 FA             sta   <_bl
+  276  00:E315  20 58 E7          jsr   mulu8
+  277                             addw  <_cx,<_si
+                0000              .if     (2 = 3)
+                                  .else
+                                   ; 2-arg mode
+                                   ;
+       00:E318  18                 clc
+       00:E319  A5 EE              lda    LOW_BYTE <_si
+       00:E31B  65 FC              adc    LOW_BYTE <_cx
+       00:E31D  85 EE              sta    LOW_BYTE <_si
+       00:E31F  A5 EF              lda    HIGH_BYTE <_si
+       00:E321  65 FD              adc    HIGH_BYTE <_cx
+       00:E323  85 EF              sta    HIGH_BYTE <_si
+                                  .endif
+  278                     
+  279                         ; ----
+  280                         ; calculate map bank
+  281                         ;
+  282  00:E325  2A        .l2:    rol   A
+  283  00:E326  2A                rol   A
+  284  00:E327  2A                rol   A
+  285  00:E328  2A                rol   A
+  286  00:E329  29 0F             and   #$0F
+  287                             add   mapbank
+                0000              .if (1 = 2)            ; register A (handle carry
+                                  .else
+       00:E32B  18                 clc
+       00:E32C  6D 9C 26           adc    mapbank
+                                  .endif
+  288  00:E32F  85 FA             sta   <_bl
+  289                     
+  290                         ; ----
+  291                         ; map data
+  292                         ;
+  293  00:E331  53 04             tam   #2
+  294  00:E333  1A                inc   A
+  295  00:E334  53 08             tam   #3
+  296  00:E336  AD AA 26          lda   mapctablebank
+  297  00:E339  53 10             tam   #4
+  298  00:E33B  1A                inc   A
+  299  00:E33C  53 20             tam   #5
+  300                     
+  301                         ; ----
+  302                         ; adjust data addresses
+  303                         ;
+  304  00:E33E  A5 EF             lda   <_si+1            ; tile ptr
+  305  00:E340  29 1F             and   #$1F
+  306  00:E342  09 40             ora   #$40
+  307  00:E344  85 EF             sta   <_si+1
+  308                             ; --
+  309  00:E346  A5 ED             lda   <_bp+1            ; color table ptr
+  310  00:E348  29 1F             and   #$1F
+  311  00:E34A  09 80             ora   #$80
+  312  00:E34C  85 ED             sta   <_bp+1
+  313                     
+  314                         ; ----
+  315                         ; vertical loop
+  316                         ;
+  317  00:E34E  A4 F9     .l3:    ldy   <_ah
+  318  00:E350  A5 FE             lda   <_dl
+  319  00:E352  85 F8             sta   <_al
+  320  00:E354  80 1E             bra   .l5
+  321                     
+  322                         ; ----
+  323                         ; horizontal loop
+  324                         ;
+  325  00:E356  C8        .l4:    iny
+  326                             ; --
+  327  00:E357  CC 9F 26          cpy   mapwidth          ; horizontal wrapping
+  328  00:E35A  D0 18             bne   .l5
+  329  00:E35C  C2                cly
+  330  00:E35D  AE AD 26          ldx   mapwrap
+  331  00:E360  D0 12             bne   .l5
+  332  00:E362  AC 9F 26          ldy   mapwidth
+  333  00:E365  AD A6 26          lda   maptilebase
+  334  00:E368  85 FC             sta   <_cl
+  335  00:E36A  AD A7 26          lda   maptilebase+1
+  336  00:E36D  12 EC             ora   [_bp]
+  337  00:E36F  85 FD             sta   <_ch
+  338  00:E371  88                dey
+  339  00:E372  80 1C             bra   .x1
+  340  00:E374            .l5:
+  341  00:E374  B1 EE             lda   [_si],Y           ; get tile index
+  342  00:E376  AA                tax                     ; calculate BAT value (tile + palette)
+  343  00:E377  02                sxy
+  344  00:E378  64 FD             stz   <_ch
+  345  00:E37A  0A                asl   A
+  346  00:E37B  26 FD             rol   <_ch
+  347  00:E37D  0A                asl   A
+  348  00:E37E  26 FD             rol   <_ch
+  349                             add   maptilebase
+                0000              .if (1 = 2)            ; register A (handle carry
+                                  .else
+       00:E380  18                 clc
+       00:E381  6D A6 26           adc    maptilebase
+                                  .endif
+  350  00:E384  85 FC             sta   <_cl
+  351  00:E386  A5 FD             lda   <_ch
+  352  00:E388  6D A7 26          adc   maptilebase+1
+  353  00:E38B  71 EC             adc   [_bp],Y
+  354  00:E38D  85 FD             sta   <_ch
+  355  00:E38F  02                sxy
+  356  00:E390            .x1:
+  357                             vreg  #0                ; copy tile
+       00:E390  A9 00              lda    #0
+       00:E392  85 F7              sta    <vdc_reg
+                0001               .if (2 = ARG_IMMED)
+       00:E394  03 00               st0   #0
+                                   .else
+                                   .endif
+  358                             stw   <_di,video_data
+       00:E396  A5 F0              lda    LOW_BYTE <_di
+       00:E398  8D 02 00           sta    LOW_BYTE video_data
+       00:E39B  A5 F1              lda    HIGH_BYTE <_di
+       00:E39D  8D 03 00           sta    HIGH_BYTE video_data
+  359                             vreg  #2
+       00:E3A0  A9 02              lda    #2
+       00:E3A2  85 F7              sta    <vdc_reg
+                0001               .if (2 = ARG_IMMED)
+       00:E3A4  03 02               st0   #2
+                                   .else
+                                   .endif
+  360                             stw   <_cx,video_data
+       00:E3A6  A5 FC              lda    LOW_BYTE <_cx
+       00:E3A8  8D 02 00           sta    LOW_BYTE video_data
+       00:E3AB  A5 FD              lda    HIGH_BYTE <_cx
+       00:E3AD  8D 03 00           sta    HIGH_BYTE video_data
+  361                             incw  <_cx
+       00:E3B0  E6 FC              inc    <_cx              ; value at stated memory
+       00:E3B2  D0 02              bne    .x_00030           ; location
+       00:E3B4  E6 FD              inc    <_cx+1
+       00:E3B6            .x_00030:
+  362                             stw   <_cx,video_data
+       00:E3B6  A5 FC              lda    LOW_BYTE <_cx
+       00:E3B8  8D 02 00           sta    LOW_BYTE video_data
+       00:E3BB  A5 FD              lda    HIGH_BYTE <_cx
+       00:E3BD  8D 03 00           sta    HIGH_BYTE video_data
+  363                             incw  <_cx
+       00:E3C0  E6 FC              inc    <_cx              ; value at stated memory
+       00:E3C2  D0 02              bne    .x_00032           ; location
+       00:E3C4  E6 FD              inc    <_cx+1
+       00:E3C6            .x_00032:
+  364                             vreg  #0
+       00:E3C6  A9 00              lda    #0
+       00:E3C8  85 F7              sta    <vdc_reg
+                0001               .if (2 = ARG_IMMED)
+       00:E3CA  03 00               st0   #0
+                                   .else
+                                   .endif
+  365                             addw  bat_width,<_di,video_data
+                0001              .if     (3 = 3)
+                                   ; 3-arg mode
+                                   ;
+       00:E3CC  18                 clc
+       00:E3CD  A5 F0              lda    LOW_BYTE <_di
+       00:E3CF  6D AE 26           adc    LOW_BYTE bat_width
+       00:E3D2  8D 02 00           sta    LOW_BYTE video_data
+       00:E3D5  A5 F1              lda    HIGH_BYTE <_di
+       00:E3D7  6D AF 26           adc    HIGH_BYTE bat_width
+       00:E3DA  8D 03 00           sta    HIGH_BYTE video_data
+                                  .else
+                                  .endif
+  366                             vreg  #2
+       00:E3DD  A9 02              lda    #2
+       00:E3DF  85 F7              sta    <vdc_reg
+                0001               .if (2 = ARG_IMMED)
+       00:E3E1  03 02               st0   #2
+                                   .else
+                                   .endif
+  367                             stw   <_cx,video_data
+       00:E3E3  A5 FC              lda    LOW_BYTE <_cx
+       00:E3E5  8D 02 00           sta    LOW_BYTE video_data
+       00:E3E8  A5 FD              lda    HIGH_BYTE <_cx
+       00:E3EA  8D 03 00           sta    HIGH_BYTE video_data
+  368                             incw  <_cx
+       00:E3ED  E6 FC              inc    <_cx              ; value at stated memory
+       00:E3EF  D0 02              bne    .x_00037           ; location
+       00:E3F1  E6 FD              inc    <_cx+1
+       00:E3F3            .x_00037:
+  369                             stw   <_cx,video_data
+       00:E3F3  A5 FC              lda    LOW_BYTE <_cx
+       00:E3F5  8D 02 00           sta    LOW_BYTE video_data
+       00:E3F8  A5 FD              lda    HIGH_BYTE <_cx
+       00:E3FA  8D 03 00           sta    HIGH_BYTE video_data
+  370                     
+  371                             incw  <_di              ; next tile
+       00:E3FD  E6 F0              inc    <_di              ; value at stated memory
+       00:E3FF  D0 02              bne    .x_00039           ; location
+       00:E401  E6 F1              inc    <_di+1
+       00:E403            .x_00039:
+  372                             incw  <_di
+       00:E403  E6 F0              inc    <_di              ; value at stated memory
+       00:E405  D0 02              bne    .x_00040           ; location
+       00:E407  E6 F1              inc    <_di+1
+       00:E409            .x_00040:
+  373  00:E409  C6 F8             dec   <_al
+  374                             lbne  .l4
+       00:E40B  F0 03              beq    .x_00041
+       00:E40D  4C 56 E3           jmp    .l4
+       00:E410            .x_00041
+  375                     
+  376                         ; ----
+  377                         ; next line
+  378                         ;
+  379  00:E410  AD AE 26          lda   bat_width         ; incremente vram address
+  380                             sub   <_dl
+                0000              .if (1 = 2)            ; from register A (handle
+                                  .else
+       00:E413  38                 sec
+       00:E414  E5 FE              sbc    <_dl
+                                  .endif
+  381  00:E416  0A                asl   A
+  382                             add   <_di
+                0000              .if (1 = 2)            ; register A (handle carry
+                                  .else
+       00:E417  18                 clc
+       00:E418  65 F0              adc    <_di
+                                  .endif
+  383  00:E41A  85 F0             sta   <_di
+  384  00:E41C  62                cla
+  385  00:E41D  65 F1             adc   <_di+1
+  386  00:E41F  85 F1             sta   <_di+1
+  387                     
+  388  00:E421  E6 FB             inc   <_bh              ; vertical wrapping
+  389  00:E423  A5 FB             lda   <_bh
+  390  00:E425  CD A1 26          cmp   mapheight
+  391  00:E428  D0 1A             bne   .l6
+  392                             ; --
+  393  00:E42A  AD 9C 26          lda   mapbank
+  394  00:E42D  53 04             tam   #2
+  395  00:E42F  1A                inc   A
+  396  00:E430  53 08             tam   #3
+  397                             stb   mapaddr,<_si
+       00:E432  AD 9D 26           lda    mapaddr
+       00:E435  85 EE              sta    <_si
+  398  00:E437  AD 9E 26          lda   mapaddr+1
+  399  00:E43A  29 1F             and   #$1F
+  400  00:E43C  09 40             ora   #$40
+  401  00:E43E  85 EF             sta   <_si+1
+  402  00:E440  64 FB             stz   <_bh
+  403  00:E442  80 1F             bra   .l7
+  404                     
+  405                     .l6:    addw  mapwidth,<_si     ; incremente map address
+                0000              .if     (2 = 3)
+                                  .else
+                                   ; 2-arg mode
+                                   ;
+       00:E444  18                 clc
+       00:E445  A5 EE              lda    LOW_BYTE <_si
+       00:E447  6D 9F 26           adc    LOW_BYTE mapwidth
+       00:E44A  85 EE              sta    LOW_BYTE <_si
+       00:E44C  A5 EF              lda    HIGH_BYTE <_si
+       00:E44E  6D A0 26           adc    HIGH_BYTE mapwidth
+       00:E451  85 EF              sta    HIGH_BYTE <_si
+                                  .endif
+  406                             ; --
+  407  00:E453  C9 60             cmp   #$60              ; adjust bank mapping if necessary
+  408                             blo   .l7
+       00:E455  90 0C              bcc    .l7
+  409                             sub   #$20
+                0000              .if (1 = 2)            ; from register A (handle
+                                  .else
+       00:E457  38                 sec
+       00:E458  E9 20              sbc    #$20
+                                  .endif
+  410  00:E45A  85 EF             sta   <_si+1
+  411  00:E45C  43 08             tma   #3
+  412  00:E45E  53 04             tam   #2
+  413  00:E460  1A                inc   A
+  414  00:E461  53 08             tam   #3
+  415                     
+  416  00:E463  C6 FF     .l7:    dec   <_dh
+  417                             lbne  .l3
+       00:E465  F0 03              beq    .x_00048
+       00:E467  4C 4E E3           jmp    .l3
+       00:E46A            .x_00048
+  418                     
+  419                         ; ----
+  420                         ; restore bank mapping
+  421                         ;
+  422  00:E46A  68                pla
+  423  00:E46B  53 20             tam   #5
+  424  00:E46D  68                pla
+  425  00:E46E  53 10             tam   #4
+  426  00:E470  68                pla
+  427  00:E471  53 08             tam   #3
+  428  00:E473  68                pla
+  429  00:E474  53 04             tam   #2
+  430  00:E476  60                rts
+  431                     
+  432                     
+  433                     ; ----
+  434                     ; load_font
+  435                     ; ----
+  436                     ; transfer a 8x8 monochrome font into VRAM, slow but can be useful
+  437                     ; ----
+  438                     ; IN :  _DI = VRAM base address
+  439                     ;       _BL = font bank
+  440                     ;       _SI = font memory location
+  441                     ;       _AL = font color (0-15)
+  442                     ;       _AH = bg color (0-15)
+  443                     ;       _CL = number of characters to copy
+  444                     ; ----
+  445                     
+  446  00:E477            load_font:
+  447                     
+  448                         ; ----
+  449                         ; map data
+  450                         ;
+  451  00:E477  20 30 E2          jsr   map_data
+  452  00:E47A  20 35 E5          jsr   set_write
+  453                     
+  454                         ; ----
+  455                         ; init bg color
+  456                         ;
+  457  00:E47D  A5 FC             lda   <_cl
+  458  00:E47F  48                pha
+  459                             ; --
+  460  00:E480  A2 03             ldx   #3
+  461  00:E482  62        .l1:    cla
+  462  00:E483  46 F9             lsr   <_ah
+  463  00:E485  90 02             bcc   .l2
+  464  00:E487  A9 FF             lda   #$FF
+  465  00:E489  95 FC     .l2:    sta   <_cl,X
+  466  00:E48B  CA                dex
+  467  00:E48C  10 F4             bpl   .l1
+  468                     
+  469                         ; ----
+  470                         ; character loop
+  471                         ;
+  472  00:E48E  FA                plx
+  473  00:E48F            .copy:
+  474                     
+  475                         ; ----
+  476                         ; plane 1
+  477                         ;
+  478  00:E48F  C2                cly
+  479  00:E490  8F F8 08  .p1:    bbs0  <_al,.p2
+  480  00:E493  B1 EE             lda   [_si],Y
+  481  00:E495  49 FF             eor   #$FF
+  482  00:E497  25 FF             and   <_dh
+  483  00:E499  80 04             bra   .p3
+  484                             ; --
+  485  00:E49B  A5 FF     .p2:    lda   <_dh
+  486  00:E49D  11 EE             ora   [_si],Y
+  487  00:E49F  8D 02 00  .p3:    sta   video_data_l
+  488                     
+  489                         ; ----
+  490                         ; plane 2
+  491                         ;
+  492  00:E4A2  9F F8 08          bbs1  <_al,.p4
+  493  00:E4A5  B1 EE             lda   [_si],Y
+  494  00:E4A7  49 FF             eor   #$FF
+  495  00:E4A9  25 FE             and   <_dl
+  496  00:E4AB  80 04             bra   .p5
+  497                             ; --
+  498  00:E4AD  A5 FE     .p4:    lda   <_dl
+  499  00:E4AF  11 EE             ora   [_si],Y
+  500  00:E4B1  8D 03 00  .p5:    sta   video_data_h
+  501                             ; --
+  502  00:E4B4  C8                iny
+  503  00:E4B5  C0 08             cpy   #8
+  504  00:E4B7  D0 D7             bne   .p1
+  505                     
+  506                         ; ----
+  507                         ; plane 3
+  508                         ;
+  509  00:E4B9  C2                cly
+  510  00:E4BA  AF F8 08  .t1:    bbs2  <_al,.t2
+  511  00:E4BD  B1 EE             lda   [_si],Y
+  512  00:E4BF  49 FF             eor   #$FF
+  513  00:E4C1  25 FD             and   <_ch
+  514  00:E4C3  80 04             bra   .t3
+  515                             ; --
+  516  00:E4C5  A5 FD     .t2:    lda   <_ch
+  517  00:E4C7  11 EE             ora   [_si],Y
+  518  00:E4C9  8D 02 00  .t3:    sta   video_data_l
+  519                     
+  520                         ; ----
+  521                         ; plane 4
+  522                         ;
+  523  00:E4CC  BF F8 08          bbs3  <_al,.t4
+  524  00:E4CF  B1 EE             lda   [_si],Y
+  525  00:E4D1  49 FF             eor   #$FF
+  526  00:E4D3  25 FC             and   <_cl
+  527  00:E4D5  80 04             bra   .t5
+  528                             ; --
+  529  00:E4D7  A5 FC     .t4:    lda   <_cl
+  530  00:E4D9  11 EE             ora   [_si],Y
+  531  00:E4DB  8D 03 00  .t5:    sta   video_data_h
+  532                             ; --
+  533  00:E4DE  C8                iny
+  534  00:E4DF  C0 08             cpy   #8
+  535  00:E4E1  D0 D7             bne   .t1
+  536                     
+  537                         ; ----
+  538                         ; next character
+  539                         ;
+  540                             addw  #8,<_si
+                0000              .if     (2 = 3)
+                                  .else
+                                   ; 2-arg mode
+                                   ;
+       00:E4E3  18                 clc
+       00:E4E4  A5 EE              lda    LOW_BYTE <_si
+       00:E4E6  69 08              adc    LOW_BYTE #8
+       00:E4E8  85 EE              sta    LOW_BYTE <_si
+       00:E4EA  A5 EF              lda    HIGH_BYTE <_si
+       00:E4EC  69 00              adc    HIGH_BYTE #8
+       00:E4EE  85 EF              sta    HIGH_BYTE <_si
+                                  .endif
+  541                             ; --
+  542  00:E4F0  CA                dex
+  543  00:E4F1  D0 9C             bne   .copy
+  544                     
+  545                         ; ----
+  546                         ; unmap data
+  547                         ;
+  548  00:E4F3  4C 52 E2          jmp   unmap_data
+  549                     
+  550                     
+  551                     ; ----
+  552                     ; load_vram
+  553                     ; ----
+  554                     ; copy a block of memory to VRAM
+  555                     ; ----
+  556                     ; IN :  _DI = VRAM location
+  557                     ;       _BL = data bank
+  558                     ;       _SI = data memory location
+  559                     ;       _CX = number of words to copy
+  560                     ; ----
+  561                     
+  562           0000              .ifdef HUC
+  564                             .endif
+  565  00:E4F6             load_vram:
+  566                     
+  567                         ; ----
+  568                         ; map data
+  569                         ;
+  570  00:E4F6  20 30 E2          jsr   map_data
+  571                     
+  572                         ; ----
+  573                         ; set vram address
+  574                         ;
+  575  00:E4F9  20 35 E5          jsr   set_write
+  576                     
+  577                         ; ----
+  578                         ; copy data
+  579                         ;
+  580  00:E4FC  C2                cly
+  581  00:E4FD  A6 FC             ldx   <_cl
+  582  00:E4FF  F0 16             beq   .l3
+  583                             ; --
+  584  00:E501  B1 EE     .l1:    lda   [_si],Y
+  585  00:E503  8D 02 00          sta   video_data_l
+  586  00:E506  C8                iny
+  587  00:E507  B1 EE             lda   [_si],Y
+  588  00:E509  8D 03 00          sta   video_data_h
+  589  00:E50C  C8                iny
+  590  00:E50D  D0 02             bne   .l2
+  591  00:E50F  E6 EF             inc   <_si+1
+  592                             ; --
+  593  00:E511  CA        .l2:    dex
+  594  00:E512  D0 ED             bne   .l1
+  595                             ; --
+  596  00:E514  20 5B E2          jsr   remap_data
+  597                             ; --
+  598  00:E517  C6 FD     .l3:    dec   <_ch
+  599  00:E519  10 E6             bpl   .l1
+  600                     
+  601                         ; ----
+  602                         ; unmap data
+  603                         ;
+  604  00:E51B  4C 52 E2          jmp   unmap_data
+  605                     
+  606                     
+  607                     ; ----
+  608                     ; set_read
+  609                     ; ----
+  610                     ; set the VDC VRAM read pointer
+  611                     ; ----
+  612                     ; IN :  _DI = VRAM location
+  613                     ; ----
+  614                     
+  615  00:E51E            set_read:
+  616                             vreg  #$01
+       00:E51E  A9 01              lda    #$01
+       00:E520  85 F7              sta    <vdc_reg
+                0001               .if (2 = ARG_IMMED)
+       00:E522  03 01               st0   #$01
+                                   .else
+                                   .endif
+  617  00:E524  A5 F0             lda   <_di 
+  618  00:E526  8D 02 00          sta   video_data_l
+  619           0000              .ifdef HUC
+  621                             .endif
+  622  00:E529  A5 F1             lda   <_di+1
+  623  00:E52B  8D 03 00          sta   video_data_h
+  624           0000              .ifdef HUC
+  626                             .endif
+  627                             vreg  #$02
+       00:E52E  A9 02              lda    #$02
+       00:E530  85 F7              sta    <vdc_reg
+                0001               .if (2 = ARG_IMMED)
+       00:E532  03 02               st0   #$02
+                                   .else
+                                   .endif
+  628  00:E534  60                rts 
+  629                     
+  630                     
+  631                     ; ----
+  632                     ; set_write
+  633                     ; ----
+  634                     ; set the VDC VRAM write pointer
+  635                     ; ----
+  636                     ; IN :  _DI = VRAM location
+  637                     ; ----
+  638                     
+  639  00:E535            set_write:
+  640                             vreg  #$00
+       00:E535  A9 00              lda    #$00
+       00:E537  85 F7              sta    <vdc_reg
+                0001               .if (2 = ARG_IMMED)
+       00:E539  03 00               st0   #$00
+                                   .else
+                                   .endif
+  641  00:E53B  A5 F0             lda   <_di 
+  642  00:E53D  8D 02 00          sta   video_data_l
+  643           0000              .ifdef HUC
+  645                             .endif
+  646  00:E540  A5 F1             lda   <_di+1
+  647  00:E542  8D 03 00          sta   video_data_h
+  648           0000              .ifdef HUC
+  650                             .endif
+  651                             vreg  #$02
+       00:E545  A9 02              lda    #$02
+       00:E547  85 F7              sta    <vdc_reg
+                0001               .if (2 = ARG_IMMED)
+       00:E549  03 02               st0   #$02
+                                   .else
+                                   .endif
+  652  00:E54B  60                rts 
+  653                     
+  654                     
+  655                     ; ----
+  656                     ; calc_vram_addr
+  657                     ; ----
+  658                     ; calculate VRAM address
+  659                     ; ----
+  660                     ; IN :    X = x coordinates
+  661                     ;         A = y     "
+  662                     ; ----
+  663                     ; OUT:  _DI = VRAM location
+  664                     ; ----
+  665                     
+  666  00:E54C            calc_vram_addr:
+  667  00:E54C  DA                phx
+  668  00:E54D  2D B2 26          and   bat_vmask
+  669  00:E550  64 F0             stz   <_di
+  670  00:E552  AE AE 26          ldx   bat_width
+  671  00:E555  E0 40             cpx   #64
+  672  00:E557  F0 07             beq   .s64
+  673  00:E559  E0 80             cpx   #128
+  674  00:E55B  F0 06             beq   .s128
+  675                             ; --
+  676  00:E55D  4A        .s32:   lsr   A
+  677  00:E55E  66 F0             ror   <_di
+  678                             ; --
+  679  00:E560  4A        .s64:   lsr   A
+  680  00:E561  66 F0             ror   <_di
+  681                             ; --
+  682  00:E563  4A        .s128:  lsr   A
+  683  00:E564  66 F0             ror   <_di
+  684  00:E566  85 F1             sta   <_di+1
+  685                             ; --
+  686  00:E568  68                pla
+  687  00:E569  2D B1 26          and   bat_hmask
+  688  00:E56C  05 F0             ora   <_di
+  689  00:E56E  85 F0             sta   <_di
+  690  00:E570  60                rts
+  691                     
+  692           0001              .if (!CDROM)
+  693                     ; ----
+  694                     ; HSR(xres)
+  695                     ; ----
+  696                     ; macros to calculate the value of the HSR VDC register
+  697                     ; ----
+  698                     ; IN :  xres, horizontal screen resolution
+  699                     ; ----
+  700                     
+  701                     HSR     .macro
+  702                              .if (\1 <= 272)
+  703                               ; low res
+  704                               .db $02
+  705                               .db (18 - (((\1 / 8) - 1) / 2))
+  706                              .else
+  707                               ; high res
+  708                               .db $03
+  709                               .db (24 - (((\1 / 8) - 1) / 2))
+  710                              .endif
+  711                             .endm
+  712                     
+  713                     
+  714                     ; ----
+  715                     ; HDR(xres)
+  716                     ; ----
+  717                     ; macros to calculate the value of the HDR VDC register
+  718                     ; ----
+  719                     ; IN :  xres, horizontal screen resolution
+  720                     ; ----
+  721                     
+  722                     HDR     .macro
+  723                              .db ((\1 / 8) - 1)
+  724                              .if (\1 <= 272)
+  725                               ; low res
+  726                               .db (38 - ((18 - (((\1 / 8) - 1) / 2)) + (\1 / 8)))
+  727                              .else
+  728                               ; high res
+  729                               .db (54 - ((24 - (((\1 / 8) - 1) / 2)) + (\1 / 8)))
+  730                              .endif
+  731                             .endm
+  732                     
+  733                     
+  734                     ; ----
+  735                     ; init_vdc
+  736                     ; ----
+  737                     ; initialize the video controller
+  738                     ;  - 256x224 screen mode
+  739                     ;  - 64x32 virtual bgmap size
+  740                     ;  - display and sprites off
+  741                     ;  - interrupts disabled
+  742                     ;  - SATB at $7F00
+  743                     ;  - VRAM cleared
+  744                     ; ----
+  745                     
+  746           26AE                 .bss
+  747  --:26AE            bat_width  .ds 2
+  748  --:26B0            bat_height .ds 1
+  749  --:26B1            bat_hmask  .ds 1
+  750  --:26B2            bat_vmask  .ds 1
+  751  --:26B3            scr_width  .ds 1
+  752  --:26B4            scr_height .ds 1
+  753           E571                 .code
+  754  00:E571            init_vdc:
+  755                     
+  756                         ; ----
+  757                         ; default screen resolution
+  758                         ;
+  759           0000              .ifndef _xres
+  761                             .endif
+  762                     
+  763                         ; ----
+  764                         ; initialize the VDC registers
+  765                         ;
+  766                             stw   #.table,<_si      ; register table address in '_si'
+       00:E571  A9 DF              lda    LOW_BYTE #.table
+       00:E573  85 EE              sta    LOW_BYTE <_si
+       00:E575  A9 E5              lda    HIGH_BYTE #.table
+       00:E577  85 EF              sta    HIGH_BYTE <_si
+  767  00:E579  C2                cly 
+  768  00:E57A  B1 EE     .l1:    lda   [_si],Y           ; select the VDC register
+  769  00:E57C  C8                iny
+  770  00:E57D  85 F7             sta   <vdc_reg
+  771  00:E57F  8D 00 00          sta   video_reg
+  772           0000              .ifdef HUC
+  775                             .endif
+  776  00:E582  B1 EE             lda   [_si],Y           ; send the 16-bit data
+  777  00:E584  C8                iny 
+  778  00:E585  8D 02 00          sta   video_data_l
+  779           0000              .ifdef HUC
+  781                             .endif
+  782  00:E588  B1 EE             lda   [_si],Y
+  783  00:E58A  C8                iny 
+  784  00:E58B  8D 03 00          sta   video_data_h
+  785           0000              .ifdef HUC
+  787                             .endif
+  788  00:E58E  C0 24             cpy   #36               ; loop if not at the end of the
+  789  00:E590  D0 E8             bne   .l1               ; table
+  790                     
+  791                         ; ----
+  792                         ; set the pixel clock frequency
+  793                         ;
+  794           0001              .if (_xres <= 272)
+  795  00:E592  9C 00 04           stz  color_ctrl
+  796                             .else
+  799                             .endif
+  800                     
+  801                         ; ----
+  802                         ; set the background & border colors to black
+  803                         ;
+  804                             stw   #256,color_reg
+       00:E595  A9 00              lda    LOW_BYTE #256
+       00:E597  8D 02 04           sta    LOW_BYTE color_reg
+       00:E59A  A9 01              lda    HIGH_BYTE #256
+       00:E59C  8D 03 04           sta    HIGH_BYTE color_reg
+  805                             stwz  color_data
+       00:E59F  9C 04 04           stz    LOW_BYTE color_data
+       00:E5A2  9C 05 04           stz    HIGH_BYTE color_data
+  806                             stwz  color_reg
+       00:E5A5  9C 02 04           stz    LOW_BYTE color_reg
+       00:E5A8  9C 03 04           stz    HIGH_BYTE color_reg
+  807                             stwz  color_data
+       00:E5AB  9C 04 04           stz    LOW_BYTE color_data
+       00:E5AE  9C 05 04           stz    HIGH_BYTE color_data
+  808                     
+  809                         ; ----
+  810                         ; clear the video RAM
+  811                         ;
+  812  00:E5B1  03 00             st0   #0
+  813  00:E5B3  13 00             st1   #0
+  814  00:E5B5  23 00             st2   #0
+  815  00:E5B7  03 02             st0   #2
+  816                     
+  817  00:E5B9  A2 80             ldx   #128
+  818  00:E5BB  C2        .l2:    cly
+  819  00:E5BC  13 00     .l3:    st1   #0
+  820  00:E5BE  23 00             st2   #0
+  821  00:E5C0  88                dey
+  822  00:E5C1  D0 F9             bne   .l3
+  823  00:E5C3  CA                dex
+  824  00:E5C4  D0 F5             bne   .l2
+  825                     
+  826                         ; ----
+  827                         ; save screen infos
+  828                         ;
+  829                             stw   #_xres,scr_width  ; resolution
+       00:E5C6  A9 00              lda    LOW_BYTE #_xres
+       00:E5C8  8D B3 26           sta    LOW_BYTE scr_width
+       00:E5CB  A9 01              lda    HIGH_BYTE #_xres
+       00:E5CD  8D B4 26           sta    HIGH_BYTE scr_width
+  830                             stw   #224,scr_height
+       00:E5D0  A9 E0              lda    LOW_BYTE #224
+       00:E5D2  8D B4 26           sta    LOW_BYTE scr_height
+       00:E5D5  A9 00              lda    HIGH_BYTE #224
+       00:E5D7  8D B5 26           sta    HIGH_BYTE scr_height
+  831                             ; --
+  832  00:E5DA  A9 01             lda   #BGMAP_SIZE_64x32 ; virtual size
+  833  00:E5DC  4C 03 E6          jmp   set_bat_size
+  834                     
+  835                         ; ----
+  836                         ; VDC register table
+  837                         ;
+  838  00:E5DF  05 00 00  .table: .db $05,$00,$00         ; CR    control register
+  839  00:E5E2  06 00 00          .db $06,$00,$00         ; RCR   scanline interrupt counter
+  840  00:E5E5  07 00 00          .db $07,$00,$00         ; BXR   background horizontal scroll offset
+  841  00:E5E8  08 00 00          .db $08,$00,$00         ; BYR        "     vertical     "      "
+  842  00:E5EB  09 10 00          .db $09,$10,$00         ; MWR   size of the virtual screen
+  843  00:E5EE  0A                .db $0A                 ; HSR +
+  844                              HSR _xres              ;     |                 [$02,$02]
+                0001               .if (_xres <= 272)
+                                    ; low res
+       00:E5EF  02                  .db $02
+       00:E5F0  03                  .db (18 - (((_xres / 8) - 1) / 2))
+                                   .else
+                                   .endif
+  845  00:E5F1  0B                .db $0B                 ; HDR | display size
+  846                              HDR _xres              ;     | and synchro     [$1F,$04]
+       00:E5F2  1F                 .db ((_xres / 8) - 1)
+                0001               .if (_xres <= 272)
+                                    ; low res
+       00:E5F3  03                  .db (38 - ((18 - (((_xres / 8) - 1) / 2)) + (_xres / 8)))
+                                   .else
+                                   .endif
+  847  00:E5F4  0C 02 17          .db $0C,$02,$17         ; VPR |
+  848  00:E5F7  0D DF 00          .db $0D,$DF,$00         ; VDW |
+  849  00:E5FA  0E 0C 00          .db $0E,$0C,$00         ; VCR +
+  850  00:E5FD  0F 10 00          .db $0F,$10,$00         ; DCR   DMA control register
+  851  00:E600  13 00 7F          .db $13,$00,$7F         ; SATB  address of the SATB
+  852                             .endif
+  853                     
+  854                     ; ----
+  855                     ; set_bat_size
+  856                     ; ----
+  857                     ; set bg map virtual size
+  858                     ; ----
+  859                     ; IN : A = new size (0-7)
+  860                     ; ----
+  861                     
+  862  00:E603            set_bat_size:
+  863  00:E603  29 07             and   #$07
+  864  00:E605  48                pha
+  865                             ; --
+  866           0000              .if (CDROM)
+  869                             .else
+  870                              vreg  #9
+       00:E606  A9 09              lda    #9
+       00:E608  85 F7              sta    <vdc_reg
+                0001               .if (2 = ARG_IMMED)
+       00:E60A  03 09               st0   #9
+                                   .else
+                                   .endif
+  871  00:E60C  68                 pla
+  872  00:E60D  AA                 tax
+  873  00:E60E  0A                 asl   A
+  874  00:E60F  0A                 asl   A
+  875  00:E610  0A                 asl   A
+  876  00:E611  0A                 asl   A
+  877           0000               .ifdef HUC
+  879                              .endif
+  880  00:E612  8D 02 00           sta   video_data_l
+  881                             .endif
+  882                             ; --
+  883  00:E615  BD 2D E6          lda  .width,X
+  884  00:E618  8D AE 26          sta   bat_width
+  885  00:E61B  9C AF 26          stz   bat_width+1
+  886  00:E61E  3A                dec   A
+  887  00:E61F  8D B1 26          sta   bat_hmask
+  888                             ; --
+  889  00:E622  BD 35 E6          lda  .height,X
+  890  00:E625  8D B0 26          sta   bat_height
+  891  00:E628  3A                dec   A
+  892  00:E629  8D B2 26          sta   bat_vmask
+  893  00:E62C  60                rts
+  894                     
+  895  00:E62D  20 40 80  .width:  .db $20,$40,$80,$80,$20,$40,$80,$80
+       00:E630  80 20 40  
+       00:E633  80 80     
+  896  00:E635  20 20 20  .height: .db $20,$20,$20,$20,$40,$40,$40,$40
+       00:E638  20 40 40  
+       00:E63B  40 40     
+  897                     
+  898                     
+  899                     ; ----
+  900                     ; init_psg
+  901                     ; ----
+  902                     ; initialize the sound generator.
+  903                     ; ----
+  904                     
+  905  00:E63D            init_psg:
+  906  00:E63D  9C 01 08          stz   psg_mainvol       ; main volume to zero
+  907  00:E640  9C 09 08          stz   psg_lfoctrl       ; disable the LFO
+  908                             
+  909  00:E643  A9 05             lda   #5                ; set volume to zero for each channel
+  910  00:E645  8D 00 08  .clear: sta   psg_ch            ; and disable them
+  911  00:E648  9C 04 08          stz   psg_ctrl
+  912  00:E64B  9C 05 08          stz   psg_pan
+  913  00:E64E  3A                dec   A
+  914  00:E64F  10 F4             bpl   .clear
+  915                     
+  916  00:E651  A9 04             lda   #4                ; disable noise for channel 5 & 6
+  917  00:E653  8D 00 08          sta   psg_ch
+  918  00:E656  9C 07 08          stz   psg_noise
+  919  00:E659  A9 05             lda   #5
+  920  00:E65B  8D 00 08          sta   psg_ch
+  921  00:E65E  9C 07 08          stz   psg_noise
+  922  00:E661  60                rts
+  923                     
+#[2]   startup.asm
+#[3]   scroll.asm
+  551                             .include "scroll.asm"
+    1                     ;
+    2                     ; SCROLL.ASM  -  MagicKit Scrolling Library
+    3                     ;
+    4                     ;
+    5                     
+    6                     ; [ 28] user scrolling vars
+    7           26B5                      .bss
+    8  --:26B5            scroll_xl:      .ds 4   ; x       |
+    9  --:26B9            scroll_xh:      .ds 4   ;         |
+   10  --:26BD            scroll_yl:      .ds 4   ; y       |
+   11  --:26C1            scroll_yh:      .ds 4   ;         | scrolling table
+   12  --:26C5            scroll_top:     .ds 4   ; top     |
+   13  --:26C9            scroll_bottom:  .ds 4   ; bottom  |
+   14  --:26CD            scroll_cr:      .ds 4   ; control |
+   15                     
+   16                     ; [ 69] display list
+   17           26D1                      .bss
+   18  --:26D1            s_idx           .ds 1
+   19  --:26D2            s_xl            .ds 8
+   20  --:26DA            s_xh            .ds 8
+   21  --:26E2            s_yl            .ds 8
+   22  --:26EA            s_yh            .ds 8
+   23  --:26F2            s_cr            .ds 8
+   24  --:26FA            s_top           .ds 9
+   25  --:2703            s_bottom        .ds 8
+   26  --:270B            s_list          .ds 8
+   27  --:2713            s_work          .ds 3
+   28                     
+   29           E662                      .code
+   30                     ; ----
+   31                     ; build_display_list
+   32                     ; ----
+   33                     
+   34  00:E662            build_disp_list:
+   35                     
+   36                         ; ----
+   37                         ; quick test
+   38                         ;
+   39  00:E662  AD CD 26          lda   scroll_cr
+   40  00:E665  0D CE 26          ora   scroll_cr+1
+   41  00:E668  0D CF 26          ora   scroll_cr+2
+   42  00:E66B  0D D0 26          ora   scroll_cr+3
+   43  00:E66E  29 01             and   #$01
+   44  00:E670  D0 02             bne   .l0
+   45                             ; --
+   46  00:E672  18                clc
+   47  00:E673  60                rts
+   48                     
+   49                         ; ----
+   50                         ; parse user scroll list
+   51                         ;
+   52  00:E674  82        .l0:    clx
+   53  00:E675  C2                cly
+   54                             ; --
+   55  00:E676  B9 CD 26  .l1:    lda   scroll_cr,Y
+   56  00:E679  29 01             and   #$01
+   57  00:E67B  F0 38             beq   .l2
+   58  00:E67D  B9 C5 26          lda   scroll_top,Y
+   59  00:E680  CD B4 26          cmp   scr_height
+   60                             bhs   .l2
+       00:E683  B0 30              bcs    .l2
+   61  00:E685  3A                dec   A
+   62  00:E686  20 1C E7          jsr   .check_list
+   63  00:E689  B0 2A             bcs   .l2
+   64                             ; -- copy scanline
+   65  00:E68B  9D FA 26          sta   s_top,X
+   66  00:E68E  B9 C9 26          lda   scroll_bottom,Y
+   67  00:E691  9D 03 27          sta   s_bottom,X
+   68                             ; -- copy display control bits
+   69  00:E694  B9 CD 26          lda   scroll_cr,Y
+   70  00:E697  29 C0             and   #$C0
+   71  00:E699  9D F2 26          sta   s_cr,X
+   72                             ; -- copy bat coordinates
+   73  00:E69C  B9 B5 26          lda   scroll_xl,Y
+   74  00:E69F  9D D2 26          sta   s_xl,X
+   75  00:E6A2  B9 B9 26          lda   scroll_xh,Y
+   76  00:E6A5  9D DA 26          sta   s_xh,X
+   77  00:E6A8  B9 BD 26          lda   scroll_yl,Y
+   78  00:E6AB  9D E2 26          sta   s_yl,X
+   79  00:E6AE  B9 C1 26          lda   scroll_yh,Y
+   80  00:E6B1  9D EA 26          sta   s_yh,X
+   81  00:E6B4  E8                inx
+   82  00:E6B5            .l2:
+   83  00:E6B5  C8                iny
+   84  00:E6B6  C0 04             cpy   #4
+   85                             blo   .l1
+       00:E6B8  90 BC              bcc    .l1
+   86                     
+   87                         ; ----
+   88                         ; init display list
+   89                         ;
+   90  00:E6BA  A9 F0             lda   #$F0
+   91  00:E6BC  9D FA 26          sta   s_top,X
+   92  00:E6BF  9D 03 27          sta   s_bottom,X
+   93  00:E6C2  E8                inx
+   94  00:E6C3  8E D1 26          stx   s_idx
+   95                             ; --
+   96  00:E6C6  C2                cly
+   97  00:E6C7  62                cla
+   98  00:E6C8  99 0B 27  .l3:    sta   s_list,Y
+   99  00:E6CB  1A                inc   A
+  100  00:E6CC  C8                iny
+  101  00:E6CD  CA                dex
+  102  00:E6CE  D0 F8             bne   .l3
+  103                     
+  104                         ; ----
+  105                         ; sort display list
+  106                         ;
+  107  00:E6D0  AD D1 26          lda   s_idx
+  108  00:E6D3  8D 13 27          sta   s_work
+  109  00:E6D6  80 39             bra   .t4
+  110  00:E6D8            .t1:
+  111  00:E6D8  9C 14 27          stz   s_work+1
+  112  00:E6DB  A0 01             ldy   #1
+  113  00:E6DD            .t2:
+  114  00:E6DD  BE 0A 27          ldx   s_list-1,Y
+  115  00:E6E0  BD FA 26          lda   s_top,X
+  116  00:E6E3  1A                inc   A
+  117  00:E6E4  8D 15 27          sta   s_work+2
+  118  00:E6E7  BE 0B 27          ldx   s_list,Y
+  119  00:E6EA  BD FA 26          lda   s_top,X
+  120  00:E6ED  1A                inc   A
+  121  00:E6EE  CD 15 27          cmp   s_work+2
+  122                             bhs   .t3
+       00:E6F1  B0 0D              bcs    .t3
+  123                             ; --
+  124  00:E6F3  B9 0A 27          lda   s_list-1,Y
+  125  00:E6F6  99 0B 27          sta   s_list,Y
+  126  00:E6F9  8A                txa
+  127  00:E6FA  99 0A 27          sta   s_list-1,Y
+  128  00:E6FD  EE 14 27          inc   s_work+1
+  129  00:E700            .t3:
+  130  00:E700  C8                iny
+  131  00:E701  CC 13 27          cpy   s_work
+  132                             blo   .t2
+       00:E704  90 D7              bcc    .t2
+  133  00:E706  AD 14 27          lda   s_work+1
+  134  00:E709  F0 0A             beq   .t5
+  135  00:E70B  CE 13 27          dec   s_work
+  136  00:E70E  AD 13 27          lda   s_work
+  137  00:E711  C9 02     .t4:    cmp   #2
+  138                             bhs   .t1
+       00:E713  B0 C3              bcs    .t1
+  139  00:E715            .t5:
+  140                         ; ----
+  141                         ; return
+  142                         ;
+  143  00:E715  AD D1 26          lda   s_idx
+  144                             add   #$FE
+                0000              .if (1 = 2)            ; register A (handle carry
+                                  .else
+       00:E718  18                 clc
+       00:E719  69 FE              adc    #$FE
+                                  .endif
+  145  00:E71B  60                rts
+  146                     
+  147                         ; ----
+  148                         ; scan display list
+  149                         ;
+  150  00:E71C            .check_list:
+  151                     
+  152  00:E71C  DA                phx
+  153  00:E71D  CA        .x1:    dex
+  154  00:E71E  30 08             bmi   .x2
+  155  00:E720  DD FA 26          cmp   s_top,X
+  156  00:E723  D0 F8             bne   .x1
+  157  00:E725  FA                plx
+  158  00:E726  38                sec
+  159  00:E727  60                rts
+  160                             ; --
+  161  00:E728  FA        .x2:    plx
+  162  00:E729  18                clc
+  163  00:E72A  60                rts
+  164                     
+#[2]   startup.asm
+#[3]   math.asm
+  552                             .include "math.asm"
+    1                     ;
+    2                     ; MATH.ASM  -  MagicKit Standard Math Routines
+    3                     ;
+    4                     ;
+    5                     
+    6                     
+    7                     ; ----
+    8                     ; divu8
+    9                     ; ----
+   10                     ; 8-bit unsigned division
+   11                     ; ----
+   12                     ; OUT : _CL = _AL / _BL
+   13                     ;       _DL = _AL % _BL
+   14                     ; ----
+   15                     
+   16  00:E72B            divu8:
+   17  00:E72B  A5 F8             lda   <_al
+   18  00:E72D  0A                asl   A
+   19  00:E72E  85 FC             sta   <_cl
+   20  00:E730  62                cla
+   21  00:E731  A0 08             ldy   #8
+   22  00:E733            .l1:
+   23  00:E733  2A                rol   A
+   24  00:E734  C5 FA             cmp   <_bl
+   25  00:E736  90 02             bcc   .l2
+   26  00:E738  E5 FA             sbc   <_bl
+   27  00:E73A            .l2:
+   28  00:E73A  26 FC             rol   <_cl
+   29  00:E73C  88                dey
+   30  00:E73D  D0 F4             bne   .l1
+   31                     
+   32  00:E73F  85 FE             sta   <_dl
+   33  00:E741  60                rts
+   34                     
+   35                     
+   36                     ; ----
+   37                     ; divu10
+   38                     ; ----
+   39                     ; 16-bit unsigned division by 10
+   40                     ; ----
+   41                     ; OUT : _DX = _DX / 10
+   42                     ;         A = _DX % 10
+   43                     ; ----
+   44                     
+   45  00:E742            divu10:
+   46  00:E742  A0 10               ldy   #16
+   47  00:E744  62                  cla
+   48  00:E745  06 FE               asl   <_dl
+   49  00:E747  26 FF               rol   <_dh
+   50  00:E749  2A        .l1:      rol   a
+   51  00:E74A  C9 0A               cmp   #10
+   52                               blo   .l2
+       00:E74C  90 02              bcc    .l2
+   53  00:E74E  E9 0A               sbc   #10
+   54  00:E750  26 FE     .l2:      rol   <_dl
+   55  00:E752  26 FF               rol   <_dh
+   56  00:E754  88                  dey
+   57  00:E755  D0 F2               bne   .l1
+   58  00:E757  60                  rts
+   59                     
+   60           0001              .if (!CDROM)
+   61                     ; ----
+   62                     ; mulu8
+   63                     ; ----
+   64                     ; 8-bit unsigned multiplication
+   65                     ; ----
+   66                     ; OUT : _CX = _AL * _BL
+   67                     ; ----
+   68                     
+   69  00:E758            mulu8:
+   70  00:E758  A5 FA             lda   <_bl
+   71  00:E75A  85 FD             sta   <_ch
+   72                     
+   73  00:E75C  62                cla
+   74  00:E75D  A0 08             ldy   #8
+   75  00:E75F            .l1:
+   76  00:E75F  0A                asl   A
+   77  00:E760  26 FD             rol   <_ch
+   78  00:E762  90 07             bcc   .next
+   79                             add   <_al
+                0000              .if (1 = 2)            ; register A (handle carry
+                                  .else
+       00:E764  18                 clc
+       00:E765  65 F8              adc    <_al
+                                  .endif
+   80  00:E767  90 02             bcc   .next
+   81  00:E769  E6 FD             inc   <_ch
+   82  00:E76B            .next:
+   83  00:E76B  88                dey
+   84  00:E76C  D0 F1             bne   .l1
+   85                     
+   86  00:E76E  85 FC             sta   <_cl
+   87  00:E770  60                rts
+   88                     
+   89                     
+   90                     ; ----
+   91                     ; mulu16
+   92                     ; ----
+   93                     ; 16-bit unsigned multiplication
+   94                     ; ----
+   95                     ; OUT : _DX/CX = _AX * _BX
+   96                     ; ----
+   97                     
+   98  00:E771            mulu16:
+   99  00:E771  A5 F9             lda   <_ah
+  100  00:E773  05 FB             ora   <_bh
+  101  00:E775  D0 07             bne   .l1
+  102                     
+  103                             stwz  <_dx              ;  8-bit multiplication
+       00:E777  64 FE              stz    LOW_BYTE <_dx
+       00:E779  64 FF              stz    HIGH_BYTE <_dx
+  104  00:E77B  4C 58 E7          jmp   mulu8
+  105                     
+  106                     .l1:    stw   <_bx,<_dx         ; 16-bit multiplication
+       00:E77E  A5 FA              lda    LOW_BYTE <_bx
+       00:E780  85 FE              sta    LOW_BYTE <_dx
+       00:E782  A5 FB              lda    HIGH_BYTE <_bx
+       00:E784  85 FF              sta    HIGH_BYTE <_dx
+  107                             stwz  <_cx
+       00:E786  64 FC              stz    LOW_BYTE <_cx
+       00:E788  64 FD              stz    HIGH_BYTE <_cx
+  108  00:E78A  A0 10             ldy   #16
+  109                     
+  110                     .l2:    aslw  <_cx
+       00:E78C  06 FC              asl    <_cx              ; word-sized value (at stated
+       00:E78E  26 FD              rol    <_cx+1            ; memory location)
+  111                             rolw  <_dx
+       00:E790  26 FE              rol    <_dx              ; (at stated memory location)
+       00:E792  26 FF              rol    <_dx+1
+  112  00:E794  90 15             bcc   .l3
+  113                     
+  114                             addw  <_ax,<_cx
+                0000              .if     (2 = 3)
+                                  .else
+                                   ; 2-arg mode
+                                   ;
+       00:E796  18                 clc
+       00:E797  A5 FC              lda    LOW_BYTE <_cx
+       00:E799  65 F8              adc    LOW_BYTE <_ax
+       00:E79B  85 FC              sta    LOW_BYTE <_cx
+       00:E79D  A5 FD              lda    HIGH_BYTE <_cx
+       00:E79F  65 F9              adc    HIGH_BYTE <_ax
+       00:E7A1  85 FD              sta    HIGH_BYTE <_cx
+                                  .endif
+  115  00:E7A3  90 06             bcc   .l3
+  116                             incw  <_dx
+       00:E7A5  E6 FE              inc    <_dx              ; value at stated memory
+       00:E7A7  D0 02              bne    .x_00078           ; location
+       00:E7A9  E6 FF              inc    <_dx+1
+       00:E7AB            .x_00078:
+  117                     
+  118  00:E7AB  88        .l3:    dey
+  119  00:E7AC  D0 DE             bne   .l2
+  120  00:E7AE  60                rts
+  121                             .endif
+  122                     
+  123                     ; ----
+  124                     ; mulu32
+  125                     ; ----
+  126                     ; 32-bit unsigned multiplication
+  127                     ; ----
+  128                     ; OUT : _DX/CX = _BX/AX * _DX/CX
+  129                     ; ----
+  130                     
+  131  00:E7AF            mulu32:
+  132                             stw   <_cx,<_si
+       00:E7AF  A5 FC              lda    LOW_BYTE <_cx
+       00:E7B1  85 EE              sta    LOW_BYTE <_si
+       00:E7B3  A5 FD              lda    HIGH_BYTE <_cx
+       00:E7B5  85 EF              sta    HIGH_BYTE <_si
+  133                             stw   <_dx,<_di
+       00:E7B7  A5 FE              lda    LOW_BYTE <_dx
+       00:E7B9  85 F0              sta    LOW_BYTE <_di
+       00:E7BB  A5 FF              lda    HIGH_BYTE <_dx
+       00:E7BD  85 F1              sta    HIGH_BYTE <_di
+  134                             stwz  <_cx
+       00:E7BF  64 FC              stz    LOW_BYTE <_cx
+       00:E7C1  64 FD              stz    HIGH_BYTE <_cx
+  135                             stwz  <_dx
+       00:E7C3  64 FE              stz    LOW_BYTE <_dx
+       00:E7C5  64 FF              stz    HIGH_BYTE <_dx
+  136  00:E7C7  A0 20             ldy   #32
+  137  00:E7C9            .loop:
+  138                             aslw  <_cx
+       00:E7C9  06 FC              asl    <_cx              ; word-sized value (at stated
+       00:E7CB  26 FD              rol    <_cx+1            ; memory location)
+  139                             rolw  <_dx
+       00:E7CD  26 FE              rol    <_dx              ; (at stated memory location)
+       00:E7CF  26 FF              rol    <_dx+1
+  140                             rolw  <_si
+       00:E7D1  26 EE              rol    <_si              ; (at stated memory location)
+       00:E7D3  26 EF              rol    <_si+1
+  141                             rolw  <_di
+       00:E7D5  26 F0              rol    <_di              ; (at stated memory location)
+       00:E7D7  26 F1              rol    <_di+1
+  142  00:E7D9  90 19             bcc   .next
+  143                     
+  144                             addw  <_ax,<_cx
+                0000              .if     (2 = 3)
+                                  .else
+                                   ; 2-arg mode
+                                   ;
+       00:E7DB  18                 clc
+       00:E7DC  A5 FC              lda    LOW_BYTE <_cx
+       00:E7DE  65 F8              adc    LOW_BYTE <_ax
+       00:E7E0  85 FC              sta    LOW_BYTE <_cx
+       00:E7E2  A5 FD              lda    HIGH_BYTE <_cx
+       00:E7E4  65 F9              adc    HIGH_BYTE <_ax
+       00:E7E6  85 FD              sta    HIGH_BYTE <_cx
+                                  .endif
+  145                             adcw  <_bx,<_dx
+       00:E7E8  A5 FE              lda    LOW_BYTE <_dx
+       00:E7EA  65 FA              adc    LOW_BYTE <_bx
+       00:E7EC  85 FE              sta    LOW_BYTE <_dx
+       00:E7EE  A5 FF              lda    HIGH_BYTE <_dx
+       00:E7F0  65 FB              adc    HIGH_BYTE <_bx
+       00:E7F2  85 FF              sta    HIGH_BYTE <_dx
+  146  00:E7F4            .next:
+  147  00:E7F4  88                dey
+  148  00:E7F5  D0 D2             bne   .loop
+  149  00:E7F7  60                rts
+  150                     
+  151                     
+  152                     ; ----
+  153                     ; srand
+  154                     ; ----
+  155                     ; set random seed
+  156                     ; ----
+  157                     ; IN : _DX/CX = 32-bit seed
+  158                     ; ----
+  159                     
+  160           2716              .bss
+  161  --:2716            _rndix  .ds 1
+  162  --:2717            _rndiy  .ds 1
+  163  --:2718            _rndbuf .ds 28
+  164                     
+  165           E7F8              .code
+  166  00:E7F8            srand:
+  167                             stw     <_cx,_rndbuf
+       00:E7F8  A5 FC              lda    LOW_BYTE <_cx
+       00:E7FA  8D 18 27           sta    LOW_BYTE _rndbuf
+       00:E7FD  A5 FD              lda    HIGH_BYTE <_cx
+       00:E7FF  8D 19 27           sta    HIGH_BYTE _rndbuf
+  168                             stw     <_dx,_rndbuf+2
+       00:E802  A5 FE              lda    LOW_BYTE <_dx
+       00:E804  8D 1A 27           sta    LOW_BYTE _rndbuf+2
+       00:E807  A5 FF              lda    HIGH_BYTE <_dx
+       00:E809  8D 1B 27           sta    HIGH_BYTE _rndbuf+2
+  169                     
+  170  00:E80C  C2                cly
+  171  00:E80D  A9 06             lda     #6
+  172  00:E80F  48        .l1:    pha
+  173  00:E810  5A                phy
+  174                             stw     #$41C6,<_bx
+       00:E811  A9 C6              lda    LOW_BYTE #$41C6
+       00:E813  85 FA              sta    LOW_BYTE <_bx
+       00:E815  A9 41              lda    HIGH_BYTE #$41C6
+       00:E817  85 FB              sta    HIGH_BYTE <_bx
+  175                             stw     #$4E6D,<_ax
+       00:E819  A9 6D              lda    LOW_BYTE #$4E6D
+       00:E81B  85 F8              sta    LOW_BYTE <_ax
+       00:E81D  A9 4E              lda    HIGH_BYTE #$4E6D
+       00:E81F  85 F9              sta    HIGH_BYTE <_ax
+  176  00:E821  20 AF E7          jsr     mulu32
+  177                             addw    #$3039,<_cx
+                0000              .if     (2 = 3)
+                                  .else
+                                   ; 2-arg mode
+                                   ;
+       00:E824  18                 clc
+       00:E825  A5 FC              lda    LOW_BYTE <_cx
+       00:E827  69 39              adc    LOW_BYTE #$3039
+       00:E829  85 FC              sta    LOW_BYTE <_cx
+       00:E82B  A5 FD              lda    HIGH_BYTE <_cx
+       00:E82D  69 30              adc    HIGH_BYTE #$3039
+       00:E82F  85 FD              sta    HIGH_BYTE <_cx
+                                  .endif
+  178                             adcw    #$0000,<_dx
+       00:E831  A5 FE              lda    LOW_BYTE <_dx
+       00:E833  69 00              adc    LOW_BYTE #$0000
+       00:E835  85 FE              sta    LOW_BYTE <_dx
+       00:E837  A5 FF              lda    HIGH_BYTE <_dx
+       00:E839  69 00              adc    HIGH_BYTE #$0000
+       00:E83B  85 FF              sta    HIGH_BYTE <_dx
+  179  00:E83D  68                pla
+  180                             add     #4
+                0000              .if (1 = 2)            ; register A (handle carry
+                                  .else
+       00:E83E  18                 clc
+       00:E83F  69 04              adc    #4
+                                  .endif
+  181  00:E841  A8                tay
+  182                             stw     <_cx,_rndbuf,Y
+       00:E842  A5 FC              lda    LOW_BYTE <_cx
+       00:E844  99 18 27           sta    LOW_BYTE _rndbuf,Y
+       00:E847  A5 FD              lda    HIGH_BYTE <_cx
+       00:E849  99 19 27           sta    HIGH_BYTE _rndbuf,Y
+  183                             stw     <_dx,_rndbuf+2,Y
+       00:E84C  A5 FE              lda    LOW_BYTE <_dx
+       00:E84E  99 1A 27           sta    LOW_BYTE _rndbuf+2,Y
+       00:E851  A5 FF              lda    HIGH_BYTE <_dx
+       00:E853  99 1B 27           sta    HIGH_BYTE _rndbuf+2,Y
+  184  00:E856  68                pla
+  185  00:E857  3A                dec     A
+  186  00:E858  D0 B5             bne     .l1
+  187                     
+  188  00:E85A  A9 0C             lda     #12
+  189  00:E85C  8D 17 27          sta     _rndiy
+  190  00:E85F  9C 16 27          stz     _rndix
+  191                     
+  192  00:E862  A9 46             lda     #70
+  193  00:E864  48        .l2:    pha
+  194  00:E865  20 6D E8          jsr     rand
+  195  00:E868  68                pla
+  196  00:E869  3A                dec     A
+  197  00:E86A  D0 F8             bne     .l2
+  198                     
+  199  00:E86C  60                rts
+  200                     
+  201                     
+  202                     ; ----
+  203                     ; rand
+  204                     ; ----
+  205                     ; return a 31-bit random number
+  206                     ; ----
+  207                     ; OUT : _DX/CX
+  208                     ; ----
+  209                     
+  210  00:E86D            rand:
+  211  00:E86D  18                clc
+  212  00:E86E  AE 16 27          ldx     _rndix
+  213  00:E871  AC 17 27          ldy     _rndiy
+  214  00:E874  B9 18 27          lda     _rndbuf,Y
+  215  00:E877  7D 18 27          adc     _rndbuf,X
+  216  00:E87A  99 18 27          sta     _rndbuf,Y
+  217  00:E87D  85 FC             sta     <_cl
+  218  00:E87F  E8                inx
+  219  00:E880  C8                iny
+  220  00:E881  B9 18 27          lda     _rndbuf,Y
+  221  00:E884  7D 18 27          adc     _rndbuf,X
+  222  00:E887  99 18 27          sta     _rndbuf,Y
+  223  00:E88A  85 FD             sta     <_ch
+  224  00:E88C  E8                inx
+  225  00:E88D  C8                iny
+  226  00:E88E  B9 18 27          lda     _rndbuf,Y
+  227  00:E891  7D 18 27          adc     _rndbuf,X
+  228  00:E894  99 18 27          sta     _rndbuf,Y
+  229  00:E897  85 FE             sta     <_dl
+  230  00:E899  E8                inx
+  231  00:E89A  C8                iny
+  232  00:E89B  B9 18 27          lda     _rndbuf,Y
+  233  00:E89E  7D 18 27          adc     _rndbuf,X
+  234  00:E8A1  99 18 27          sta     _rndbuf,Y
+  235  00:E8A4  85 FF             sta     <_dh
+  236  00:E8A6  E8                inx
+  237  00:E8A7  C8                iny
+  238                     
+  239  00:E8A8  46 FF             lsr     <_dh
+  240  00:E8AA  66 FE             ror     <_dl
+  241  00:E8AC  66 FD             ror     <_ch
+  242  00:E8AE  66 FC             ror     <_cl
+  243                     
+  244  00:E8B0  C0 1C             cpy     #28
+  245                             blo     .l1
+       00:E8B2  90 03              bcc    .l1
+  246  00:E8B4  C2                cly
+  247  00:E8B5  80 05             bra     .l2
+  248                     
+  249  00:E8B7  E0 1C     .l1:    cpx     #28
+  250                             blo     .l2
+       00:E8B9  90 01              bcc    .l2
+  251  00:E8BB  82                clx
+  252                     
+  253  00:E8BC  8E 16 27  .l2:    stx     _rndix
+  254  00:E8BF  8C 17 27          sty     _rndiy
+  255  00:E8C2  60                rts
+  256                     
+  257                     
+  258                     ; ----
+  259                     ; random
+  260                     ; ----
+  261                     ; return a random number in the interval 0 <= x < A
+  262                     ; ----
+  263                     ; IN  : A = range (1 - 128)
+  264                     ; ----
+  265                     ; OUT : A = random number
+  266                     ; ----
+  267                     
+  268  00:E8C3            random:
+  269  00:E8C3  48                pha
+  270  00:E8C4  20 6D E8          jsr     rand
+  271  00:E8C7  68                pla
+  272                             ; ----
+  273  00:E8C8  C9 80             cmp     #128
+  274                             blo     .l1
+       00:E8CA  90 03              bcc    .l1
+  275                     
+  276  00:E8CC  A5 FF             lda     <_dh
+  277  00:E8CE  60                rts
+  278                     
+  279  00:E8CF  0A        .l1:    asl     A
+  280  00:E8D0  85 F8             sta     <_al
+  281  00:E8D2  A5 FF             lda     <_dh
+  282  00:E8D4  85 FA             sta     <_bl
+  283  00:E8D6  20 58 E7          jsr     mulu8
+  284                     
+  285  00:E8D9  A5 FD             lda     <_ch
+  286  00:E8DB  60                rts
+  287                     
+#[2]   startup.asm
+  553                            .endif
+  554                     
+  555                     ; ----
+  556                     ; disp_on
+  557                     ; ----
+  558                     ; enable display
+  559                     ; ----
+  560                     
+  561           0000             .ifdef HUC
+  568                            .else
+  569  00:E8DC             disp_on:
+  570  00:E8DC  A9 01             lda   #1
+  571  00:E8DE  8D 98 26          sta   disp_cr
+  572  00:E8E1  60                rts
+  573                            .endif
+  574                     
+  575                     ; ----
+  576                     ; disp_off
+  577                     ; ----
+  578                     ; disable display
+  579                     ; ----
+  580                     
+  581           0000             .ifdef HUC
+  587                            .else
+  588  00:E8E2             disp_off:
+  589  00:E8E2  9C 98 26          stz   disp_cr
+  590  00:E8E5  60                rts
+  591                            .endif
+  592                     
+  593                     ; ----
+  594                     ; set_intvec
+  595                     ; ----
+  596                     ; set interrupt vector
+  597                     ; ----
+  598                     ; IN : A = vector number
+  599                     ;           0 IRQ2
+  600                     ;           1 IRQ1 (VDC)
+  601                     ;           2 TIMER
+  602                     ;           3 NMI
+  603                     ;           4 VSYNC
+  604                     ;           5 HSYNC
+  605                     ;           6 SOFT RESET (RUN + SELECT)
+  606                     ;      X = vector address low byte
+  607                     ;      Y =   "      "    high byte
+  608                     ; ----
+  609                     
+  610  00:E8E6            set_intvec:
+  611  00:E8E6  08                php
+  612  00:E8E7  78                sei
+  613  00:E8E8  C9 06             cmp   #6
+  614                             blo  .vector
+       00:E8EA  90 0A              bcc    .vector
+  615  00:E8EC  D0 14             bne  .exit
+  616  00:E8EE            .reset:
+  617  00:E8EE  8E 84 22          stx   soft_reset
+  618  00:E8F1  8C 85 22          sty   soft_reset+1
+  619  00:E8F4  80 0C             bra  .exit      
+  620  00:E8F6            .vector:
+  621  00:E8F6  48                pha
+  622  00:E8F7  0A                asl   A
+  623  00:E8F8  22                sax
+  624  00:E8F9  9D 00 22          sta   user_jmptbl,X
+  625  00:E8FC  E8                inx
+  626  00:E8FD  98                tya
+  627  00:E8FE  9D 00 22          sta   user_jmptbl,X
+  628  00:E901  68                pla
+  629  00:E902            .exit:
+  630  00:E902  28                plp
+  631  00:E903  60                rts
+  632                     
+  633                     ; ----
+  634                     ; wait_vsync
+  635                     ; ----
+  636                     ; wait the next vsync
+  637                     ; ----
+  638                     ; IN :  A = number of frames to be sync'ed on
+  639                     ; ----
+  640                     ; OUT:  A = number of elapsed frames since last call
+  641                     ; ----
+  642                     
+  643  00:E904            wait_vsync:
+  644  00:E904  1F F5 02          bbr1 <irq_m,.l1
+  645  00:E907  62                cla                     ; return immediately if IRQ1 is redirected
+  646           0000             .ifdef HUC
+  648                            .endif
+  649  00:E908  60                rts
+  650                     
+  651  00:E909  78        .l1:    sei                     ; disable interrupts
+  652  00:E90A  CD 41 22          cmp   irq_cnt           ; calculate how many frames to wait
+  653  00:E90D  F0 05             beq  .l2
+  654                             bhs  .l3
+       00:E90F  B0 04              bcs    .l3
+  655  00:E911  AD 41 22          lda   irq_cnt
+  656  00:E914  1A        .l2:    inc   A
+  657                     .l3:    sub   irq_cnt
+                0000              .if (1 = 2)            ; from register A (handle
+                                  .else
+       00:E915  38                 sec
+       00:E916  ED 41 22           sbc    irq_cnt
+                                  .endif
+  658  00:E919  8D 80 26          sta   vsync_cnt
+  659  00:E91C  58                cli                     ; re-enable interrupts
+  660                     
+  661  00:E91D  AD 41 22  .l4:    lda   irq_cnt           ; wait loop
+  662  00:E920  CD 41 22  .l5:    cmp   irq_cnt
+  663  00:E923  F0 FB             beq  .l5
+  664  00:E925  CE 80 26          dec   vsync_cnt
+  665  00:E928  D0 F3             bne  .l4
+  666                     
+  667  00:E92A  9C 41 22          stz   irq_cnt           ; reset system interrupt counter
+  668  00:E92D  1A                inc   A                 ; return number of elapsed frames
+  669                     
+  670           0001             .ifndef HUC
+  671  00:E92E  60                rts
+  672                            .else
+  719                            .endif
+  720                     
+  721                     ; ----
+  722                     ; read_joypad
+  723                     ; ----
+  724                     ; poll joypads
+  725                     ;
+  726                     ; 'joyport' (location $1000) is a control read/write port which only reads
+  727                     ; 4 bits at a time; the program uses joyport to toggle the multiplex line
+  728                     ;
+  729                     ; real logic values are read into the port - the joypad's keys are default
+  730                     ; high, and 'pulled' low when pressed.  Therefore, these values must be
+  731                     ; inverted/complemented to yield values where '1' means 'pressed'
+  732                     ;
+  733                     ; bit values for joypad bytes: (MSB = #7; LSB = #0)
+  734                     ; -------------------------------------------------
+  735                     ; bit 0 (ie $01) = I
+  736                     ; bit 1 (ie $02) = II
+  737                     ; bit 2 (ie $04) = 'select'
+  738                     ; bit 3 (ie $08) = 'run'
+  739                     ; bit 4 (ie $10) = UP
+  740                     ; bit 5 (ie $20) = RIGHT
+  741                     ; bit 6 (ie $40) = DOWN
+  742                     ; bit 7 (ie $80) = LEFT
+  743                     ; ----
+  744                     
+  745  00:E92F            read_joypad:
+  746  00:E92F  A9 01             lda   #$01              ; reset joypad port to joystick #1
+  747  00:E931  8D 00 10          sta   joyport
+  748  00:E934  A9 03             lda   #$03
+  749  00:E936  8D 00 10          sta   joyport
+  750  00:E939  20 9A E9          jsr   .delay
+  751                     
+  752                         ; ----
+  753                         ; poll all the joypads
+  754                         ;
+  755  00:E93C  C2                cly                     ; counter for 5 joypads
+  756  00:E93D  A9 01     .l1:    lda   #$01              ; first nybble
+  757  00:E93F  8D 00 10          sta   joyport
+  758  00:E942  44 56             bsr  .delay             ; required delay (approx 9 cycles)
+  759  00:E944  B9 28 22          lda   joy,Y             ; move previous pad value to 'prev' area
+  760  00:E947  99 32 22          sta   joyold,Y
+  761  00:E94A  AD 00 10          lda   joyport           ; fetch first nybble
+  762  00:E94D  0A                asl   A                 ; shift it to 'high' position within byte
+  763  00:E94E  0A                asl   A
+  764  00:E94F  0A                asl   A
+  765  00:E950  0A                asl   A
+  766  00:E951  99 28 22          sta   joy,Y             ; store in 'current' area
+  767  00:E954  9C 00 10          stz   joyport           ; toggle port (to read other 4 key values)
+  768  00:E957  44 41             bsr  .delay             ; delay again
+  769  00:E959  AD 00 10          lda   joyport           ; fetch second nybble
+  770  00:E95C  29 0F             and   #$0F              ; clear unused bits
+  771  00:E95E  19 28 22          ora   joy,Y             ; merge 2 nybbles into 1 byte
+  772  00:E961  49 FF             eor   #$FF              ; reset 'sense' of keys
+  773  00:E963  99 28 22          sta   joy,Y             ; store it
+  774  00:E966  59 32 22          eor   joyold,Y          ; check against previous value
+  775  00:E969  39 28 22          and   joy,Y
+  776  00:E96C  99 2D 22          sta   joytrg,Y          ; 'new key pressed' key values
+  777                     
+  778                         ; ----
+  779                         ; buffered 'new key pressed'
+  780                         ; see joy_events();
+  781                         ;
+  782  00:E96F  19 8B 26          ora   joybuf,Y          ; collect 'new key pressed'
+  783  00:E972  99 8B 26          sta   joybuf,Y
+  784                     
+  785                     ; ** old code **
+  786                     ;       ora   joybuf,Y          ; collect 'new key pressed'
+  787                     ;       sta   joybuf,Y
+  788                     ;       lda   vsync_cnt
+  789                     ;       cmp   #1
+  790                     ;       bne  .l2
+  791                     ;       lda   joybuf,Y          ; update keys
+  792                     ;       eor   joyprev,Y
+  793                     ;       and   joybuf,Y
+  794                     ;       sta   joydlta,Y
+  795                     ;       lda   joybuf,Y
+  796                     ;       sta   joyprev,Y
+  797                     ;       cla
+  798                     ;       sta   joybuf,Y
+  799                     
+  800                         ; ----
+  801                         ; next joypad
+  802                         ;
+  803  00:E975  C8        .l2:    iny
+  804  00:E976  C0 05             cpy   #$05              ; cycle for next of 5 joypads
+  805  00:E978  90 C3             bcc  .l1
+  806                     
+  807                         ; ----
+  808                         ; soft reset check
+  809                         ;
+  810  00:E97A  C2                cly                     ; start cycle of 5 joypads
+  811  00:E97B  AD 27 22  .l3:    lda   joyena            ; find mask of 'important' joysticks
+  812  00:E97E  39 A0 E9          and  .bitmsk,Y
+  813  00:E981  F0 11             beq  .l4                ; not important enough to check
+  814  00:E983  B9 2D 22          lda   joytrg,Y
+  815  00:E986  C9 04             cmp   #$04              ; 'select' key newly-pressed ?
+  816  00:E988  D0 0A             bne  .l4
+  817  00:E98A  B9 28 22          lda   joy,Y
+  818  00:E98D  C9 0C             cmp   #$0C              ; 'run+select' currently pressed ?
+  819  00:E98F  D0 03             bne  .l4
+  820                     
+  821           0000             .if (DEVELO)
+  823                            .else
+  824  00:E991  6C 84 22          jmp   [soft_reset]      ; run+select 'soft reset' vector
+  825                            .endif
+  826                     
+  827  00:E994  C8        .l4:    iny                     ; try next joypad
+  828  00:E995  C0 05             cpy   #$05
+  829  00:E997  90 E2             bcc  .l3
+  830                     
+  831                         ; ----
+  832                         ; joyread hook
+  833                         ;
+  834           0000             .ifdef HUC
+  839                            .endif
+  840                         ; ----
+  841                         ; return
+  842                         ;
+  843  00:E999  60                rts
+  844                     
+  845                         ; ----
+  846                         ; small delay
+  847                         ;
+  848  00:E99A            .delay:
+  849  00:E99A  A2 03             ldx   #3
+  850  00:E99C  CA        .l6:    dex
+  851  00:E99D  D0 FD             bne  .l6
+  852  00:E99F  60                rts
+  853                     
+  854  00:E9A0            .bitmsk:
+  855  00:E9A0  01 02 04          .db $01,$02,$04,$08,$10 ; bit-masks for check-reset
+       00:E9A3  08 10     
+  856                     
+  857                         ; ----
+  858                         ; user routine
+  859                         ;
+  860           0000             .ifdef HUC
+  863                            .endif
+  864                     
+  865                     
+  866                     ;±±[ USER PROGRAM ]±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+  867                     
+  870                     
+  871                             ;...
+  872                     
+  873                             .endif
+  874                     
+#[1]   BALL.ASM
+    6                     
+    7                     ; ----
+    8                     ; sprite addresses
+    9                     
+   10           7F00      SATB_BASE       .equ $7F00
+   11           4000      SPRITE_BASE     .equ $4000
+   12           4000      SPR_GROUP       .equ SPRITE_BASE
+   13           4000      BALL_A          .equ SPR_GROUP
+   14           4100      BALL_B          .equ SPR_GROUP+$100
+   15                     
+   16                     ; ----
+   17                     ; demo variables
+   18                     
+   19           2734              .bss
+   20  --:2734            sx      .ds 2   ; the sprite coordinates
+   21  --:2736            sy      .ds 2
+   22  --:2738            y_idx   .ds 2   ; index in the y coordinate table (0-63)
+   23  --:273A            flag    .ds 1   ; used to remember in which direction the ball moves
+   24  --:273B            cnt     .ds 1   ; counter used for loops
+   25  --:273C            satb    .ds 512 ; the local SATB
+   26                     
+   27                     ; ----
+   28                     ; ball demo main routine
+   29                     
+   30           E9A5              .code
+   31           0001              .bank MAIN_BANK
+   32           C000              .org  $C000
+   33  01:C000            main:
+   34                             ; upload the sprite in VRAM, the ball is 32x32 in size
+   35                     
+   36                             load_sprites BALL_A,ball,#1
+                          
+                                  ; put the VRAM address in _di
+                          
+                                   stw   #BALL_A,<_di
+       01:C000  A9 00              lda    LOW_BYTE #BALL_A
+       01:C002  85 F0              sta    LOW_BYTE <_di
+       01:C004  A9 40              lda    HIGH_BYTE #BALL_A
+       01:C006  85 F1              sta    HIGH_BYTE <_di
+                          
+                                  ; put the sprite bank address in _si/_bl
+                          
+                                   stw   #ball,<_si
+       01:C008  A9 00              lda    LOW_BYTE #ball
+       01:C00A  85 EE              sta    LOW_BYTE <_si
+       01:C00C  A9 60              lda    HIGH_BYTE #ball
+       01:C00E  85 EF              sta    HIGH_BYTE <_si
+                                   stb   #BANK(ball),<_bl
+       01:C010  A9 02              lda    #BANK(ball)
+       01:C012  85 FA              sta    <_bl
+                          
+                                  ; get the number of patterns to copy, multiply it by $200 -
+                                  ; the size in words of a 32x64 pattern (remember that
+                                  ; 'load_vram' need a size in words), and put it in _cx
+                          
+       01:C014  A9 01              lda   #1
+       01:C016  0A                 asl   A
+       01:C017  64 FC              stz   <_cx
+       01:C019  85 FD              sta   <_cx+1
+                          
+                                  ; call the 'load_vram' function
+                          
+       01:C01B  20 F6 E4           jsr load_vram
+   37                     
+   38                             ; initialize the local SATB (hide all the 64 sprites)
+   39                     
+   40                             init_satb satb
+       01:C01E  9C 3C 27           stz satb
+       01:C021  73 3C 27           tii satb,satb+1,511
+       01:C024  3D 27 FF  
+       01:C027  01        
+   41                     
+   42                             ; initialize our lovely ball
+   43                     
+   44                             stw   #((256-32)/2),sx  ; that will center it on the screen
+       01:C028  A9 70              lda    LOW_BYTE #((256-32)/2)
+       01:C02A  8D 34 27           sta    LOW_BYTE sx
+       01:C02D  A9 00              lda    HIGH_BYTE #((256-32)/2)
+       01:C02F  8D 35 27           sta    HIGH_BYTE sx
+   45                             stw   #((224-32)/2),sy
+       01:C032  A9 60              lda    LOW_BYTE #((224-32)/2)
+       01:C034  8D 36 27           sta    LOW_BYTE sy
+       01:C037  A9 00              lda    HIGH_BYTE #((224-32)/2)
+       01:C039  8D 37 27           sta    HIGH_BYTE sy
+   46                     
+   47                             spr_set #0,satb
+                          
+                                  ; multiply the sprite number by 8 (the size of a SATB entry)
+                                  ; and put the result in _si
+                          
+       01:C03C  64 EF              stz   <_si+1
+       01:C03E  A9 00              lda   #0
+       01:C040  0A                 asl   A
+       01:C041  0A                 asl   A
+       01:C042  0A                 asl   A
+       01:C043  26 EF              rol   <_si+1
+       01:C045  85 EE              sta   <_si
+                          
+                                  ; add the satb address to _si
+                          
+                                   addw  #satb,<_si
+                0000              .if     (2 = 3)
+                                  .else
+                                   ; 2-arg mode
+                                   ;
+       01:C047  18                 clc
+       01:C048  A5 EE              lda    LOW_BYTE <_si
+       01:C04A  69 3C              adc    LOW_BYTE #satb
+       01:C04C  85 EE              sta    LOW_BYTE <_si
+       01:C04E  A5 EF              lda    HIGH_BYTE <_si
+       01:C050  69 27              adc    HIGH_BYTE #satb
+       01:C052  85 EF              sta    HIGH_BYTE <_si
+                                  .endif
+   48                             spr_x sx,#32
+       01:C054  A0 02              ldy   #2
+                0001               .if (2 = 2)
+       01:C056  AD 34 27            lda   LOW_BYTE sx
+       01:C059  18                  clc
+       01:C05A  69 20               adc   LOW_BYTE #32
+       01:C05C  91 EE               sta   [_si],Y
+       01:C05E  AD 35 27            lda   HIGH_BYTE sx
+       01:C061  69 00               adc   HIGH_BYTE #32
+                                   .else
+                                   .endif
+       01:C063  C8                 iny
+       01:C064  91 EE              sta   [_si],Y
+   49                             spr_y sy,#56
+                0001               .if (2 = 2)
+       01:C066  AD 36 27            lda   LOW_BYTE sy
+       01:C069  18                  clc
+       01:C06A  69 38               adc   LOW_BYTE #56
+       01:C06C  92 EE               sta   [_si]
+       01:C06E  AD 37 27            lda   HIGH_BYTE sy
+       01:C071  69 00               adc   HIGH_BYTE #56
+                                   .else
+                                   .endif
+       01:C073  A0 01              ldy   #1
+       01:C075  91 EE              sta   [_si],Y
+   50                             spr_pattern #BALL_A
+       01:C077  A0 04              ldy   #4
+                0001               .if (2 = ARG_IMMED)
+       01:C079  A9 00               lda   #LOW((#BALL_A) >> 5)
+       01:C07B  91 EE               sta   [_si],Y
+       01:C07D  A9 02               lda   #HIGH((#BALL_A) >> 5)
+                                   .else
+                                   .endif
+       01:C07F  C8                 iny
+       01:C080  91 EE              sta   [_si],Y
+   51                             spr_ctrl  #SIZE_MASK|FLIP_MASK,#SIZE_32x32|NO_FLIP
+       01:C082  A0 07              ldy   #7
+       01:C084  A9 B9              lda   #SIZE_MASK|FLIP_MASK
+       01:C086  49 FF              eor   #$FF
+       01:C088  31 EE              and   [_si],Y
+       01:C08A  09 11              ora   #SIZE_32x32|NO_FLIP
+       01:C08C  91 EE              sta   [_si],Y
+   52                             spr_pri   #1
+       01:C08E  A0 06              ldy   #6
+       01:C090  B1 EE              lda   [_si],Y
+       01:C092  29 7F              and   #$7F
+       01:C094  A2 01              ldx   #1
+       01:C096  F0 02              beq   .x00117
+       01:C098  09 80              ora   #$80
+       01:C09A            .x00117:
+       01:C09A  91 EE              sta [_si],Y
+   53                             spr_pal   #0
+       01:C09C  A0 06              ldy   #6
+       01:C09E  B1 EE              lda   [_si],Y
+       01:C0A0  29 F0              and   #$F0
+       01:C0A2  09 00              ora   #0
+       01:C0A4  91 EE              sta   [_si],Y
+   54                     
+   55                             ; vsync before setting the palette, to avoid snow
+   56                     
+   57                             vsync
+                0001              .if (0 = 0)
+       01:C0A6  A9 01              lda #1
+                                  .else
+                                  .endif
+       01:C0A8  20 04 E9           jsr  wait_vsync
+   58                     
+   59                             ; set the sprite palette
+   60                     
+   61                             map   ball_colors
+       01:C0AB  A9 02              lda   #bank(ball_colors)        ; addressable memory
+       01:C0AD  53 08              tam   #page(ball_colors)
+   62                             set_sprpal #0,ball_colors
+       01:C0AF  A9 00              lda   #0
+                                   add   #16
+                0000              .if (1 = 2)            ; register A (handle carry
+                                  .else
+       01:C0B1  18                 clc
+       01:C0B2  69 10              adc    #16
+                                  .endif
+       01:C0B4  85 F8              sta   <_al
+                0001              .if (6 = 6)
+                                   stb   #BANK(ball_colors),<_bl
+       01:C0B6  A9 02              lda    #BANK(ball_colors)
+       01:C0B8  85 FA              sta    <_bl
+                                  .else
+                                  .endif
+                                   stw   #ball_colors,<_si
+       01:C0BA  A9 00              lda    LOW_BYTE #ball_colors
+       01:C0BC  85 EE              sta    LOW_BYTE <_si
+       01:C0BE  A9 64              lda    HIGH_BYTE #ball_colors
+       01:C0C0  85 EF              sta    HIGH_BYTE <_si
+                0000              .if 0
+                                  .else
+       01:C0C2  A9 01              lda   #1
+                                  .endif
+       01:C0C4  85 FC              sta   <_cl
+       01:C0C6  20 70 E2           jsr   load_palette
+   63                     
+   64                             ; we are now ready to move the ball!
+   65  01:C0C9            .anim:
+   66                             vsync
+                0001              .if (0 = 0)
+       01:C0C9  A9 01              lda #1
+                                  .else
+                                  .endif
+       01:C0CB  20 04 E9           jsr  wait_vsync
+   67  01:C0CE            .go:
+   68  01:C0CE  AD 3A 27          lda   flag              ; check in which direction to move the ball
+   69  01:C0D1  D0 18             bne   .up
+   70  01:C0D3            .down:
+   71                             cmpw  #45,y_idx         ; that will be down
+       01:C0D3  AD 39 27           lda    HIGH_BYTE y_idx
+       01:C0D6  C9 00              cmp    HIGH_BYTE #45
+       01:C0D8  D0 05              bne    .x_00126
+       01:C0DA  AD 38 27           lda    LOW_BYTE y_idx
+       01:C0DD  C9 2D              cmp    LOW_BYTE #45
+       01:C0DF            .x_00126:
+   72  01:C0DF  F0 2B             beq   .swap
+   73                             incw  y_idx
+       01:C0E1  EE 38 27           inc    y_idx              ; value at stated memory
+       01:C0E4  D0 03              bne    .x_00127           ; location
+       01:C0E6  EE 39 27           inc    y_idx+1
+       01:C0E9            .x_00127:
+   74  01:C0E9  80 2B             bra   .update
+   75  01:C0EB            .up:
+   76                             cmpw  #0,y_idx          ; or up
+       01:C0EB  AD 39 27           lda    HIGH_BYTE y_idx
+       01:C0EE  C9 00              cmp    HIGH_BYTE #0
+       01:C0F0  D0 05              bne    .x_00128
+       01:C0F2  AD 38 27           lda    LOW_BYTE y_idx
+       01:C0F5  C9 00              cmp    LOW_BYTE #0
+       01:C0F7            .x_00128:
+   77  01:C0F7  F0 13             beq   .swap
+   78                             decw  y_idx
+       01:C0F9  38                 sec                    ; value at stated memory
+       01:C0FA  AD 38 27           lda    y_idx              ; location
+       01:C0FD  E9 01              sbc    #1
+       01:C0FF  8D 38 27           sta    y_idx
+       01:C102  AD 39 27           lda    y_idx+1
+       01:C105  E9 00              sbc    #0
+       01:C107  8D 39 27           sta    y_idx+1
+   79  01:C10A  80 0A             bra   .update
+   80  01:C10C            .swap:
+   81  01:C10C  AD 3A 27          lda   flag              ; change the ball direction
+   82  01:C10F  49 01             eor   #$1
+   83  01:C111  8D 3A 27          sta   flag
+   84  01:C114  80 B8             bra   .go
+   85  01:C116            .update:
+   86                             stw   #y_table,<_si     ; get the y coordinate in the y index
+       01:C116  A9 20              lda    LOW_BYTE #y_table
+       01:C118  85 EE              sta    LOW_BYTE <_si
+       01:C11A  A9 64              lda    HIGH_BYTE #y_table
+       01:C11C  85 EF              sta    HIGH_BYTE <_si
+   87  01:C11E  AD 38 27          lda   y_idx             ; table: sy = y_table[y_idx]
+   88  01:C121  0A                asl   A
+   89  01:C122  A8                tay
+   90  01:C123  B1 EE             lda   [_si],Y
+   91  01:C125  8D 36 27          sta   sy
+   92  01:C128  C8                iny
+   93  01:C129  B1 EE             lda   [_si],Y
+   94  01:C12B  8D 37 27          sta   sy+1
+   95                     
+   96                             spr_set #0,satb         ; select sprite
+                          
+                                  ; multiply the sprite number by 8 (the size of a SATB entry)
+                                  ; and put the result in _si
+                          
+       01:C12E  64 EF              stz   <_si+1
+       01:C130  A9 00              lda   #0
+       01:C132  0A                 asl   A
+       01:C133  0A                 asl   A
+       01:C134  0A                 asl   A
+       01:C135  26 EF              rol   <_si+1
+       01:C137  85 EE              sta   <_si
+                          
+                                  ; add the satb address to _si
+                          
+                                   addw  #satb,<_si
+                0000              .if     (2 = 3)
+                                  .else
+                                   ; 2-arg mode
+                                   ;
+       01:C139  18                 clc
+       01:C13A  A5 EE              lda    LOW_BYTE <_si
+       01:C13C  69 3C              adc    LOW_BYTE #satb
+       01:C13E  85 EE              sta    LOW_BYTE <_si
+       01:C140  A5 EF              lda    HIGH_BYTE <_si
+       01:C142  69 27              adc    HIGH_BYTE #satb
+       01:C144  85 EF              sta    HIGH_BYTE <_si
+                                  .endif
+   97                             spr_x sx,#32            ; set coordinates
+       01:C146  A0 02              ldy   #2
+                0001               .if (2 = 2)
+       01:C148  AD 34 27            lda   LOW_BYTE sx
+       01:C14B  18                  clc
+       01:C14C  69 20               adc   LOW_BYTE #32
+       01:C14E  91 EE               sta   [_si],Y
+       01:C150  AD 35 27            lda   HIGH_BYTE sx
+       01:C153  69 00               adc   HIGH_BYTE #32
+                                   .else
+                                   .endif
+       01:C155  C8                 iny
+       01:C156  91 EE              sta   [_si],Y
+   98                             spr_y sy,#56
+                0001               .if (2 = 2)
+       01:C158  AD 36 27            lda   LOW_BYTE sy
+       01:C15B  18                  clc
+       01:C15C  69 38               adc   LOW_BYTE #56
+       01:C15E  92 EE               sta   [_si]
+       01:C160  AD 37 27            lda   HIGH_BYTE sy
+       01:C163  69 00               adc   HIGH_BYTE #56
+                                   .else
+                                   .endif
+       01:C165  A0 01              ldy   #1
+       01:C167  91 EE              sta   [_si],Y
+   99                             spr_pattern #BALL_A     ; set pattern
+       01:C169  A0 04              ldy   #4
+                0001               .if (2 = ARG_IMMED)
+       01:C16B  A9 00               lda   #LOW((#BALL_A) >> 5)
+       01:C16D  91 EE               sta   [_si],Y
+       01:C16F  A9 02               lda   #HIGH((#BALL_A) >> 5)
+                                   .else
+                                   .endif
+       01:C171  C8                 iny
+       01:C172  91 EE              sta   [_si],Y
+  100                     
+  101                             cmpw  #43,y_idx         ; different pattern (flattened ball)
+       01:C174  AD 39 27           lda    HIGH_BYTE y_idx
+       01:C177  C9 00              cmp    HIGH_BYTE #43
+       01:C179  D0 05              bne    .x_00136
+       01:C17B  AD 38 27           lda    LOW_BYTE y_idx
+       01:C17E  C9 2B              cmp    LOW_BYTE #43
+       01:C180            .x_00136:
+  102                             blo   .satb             ; when y_idx >= 43
+       01:C180  90 0B              bcc    .satb
+  103                             spr_pattern #BALL_B
+       01:C182  A0 04              ldy   #4
+                0001               .if (2 = ARG_IMMED)
+       01:C184  A9 08               lda   #LOW((#BALL_B) >> 5)
+       01:C186  91 EE               sta   [_si],Y
+       01:C188  A9 02               lda   #HIGH((#BALL_B) >> 5)
+                                   .else
+                                   .endif
+       01:C18A  C8                 iny
+       01:C18B  91 EE              sta   [_si],Y
+  104  01:C18D            .satb:
+  105                             update_satb satb        ; upload the BAT in VRAM
+                                   stw   #satb,<_si
+       01:C18D  A9 3C              lda    LOW_BYTE #satb
+       01:C18F  85 EE              sta    LOW_BYTE <_si
+       01:C191  A9 27              lda    HIGH_BYTE #satb
+       01:C193  85 EF              sta    HIGH_BYTE <_si
+                                   stb   #BANK(satb),<_bl
+       01:C195  A9 F8              lda    #BANK(satb)
+       01:C197  85 FA              sta    <_bl
+                0000               .if (0)
+                                   .else
+                                    stw   #$7F00,<_di
+       01:C199  A9 00              lda    LOW_BYTE #$7F00
+       01:C19B  85 F0              sta    LOW_BYTE <_di
+       01:C19D  A9 7F              lda    HIGH_BYTE #$7F00
+       01:C19F  85 F1              sta    HIGH_BYTE <_di
+                                   .endif
+                0000               .if (0)
+                                   .else
+                                    stw   #$100,<_cx
+       01:C1A1  A9 00              lda    LOW_BYTE #$100
+       01:C1A3  85 FC              sta    LOW_BYTE <_cx
+       01:C1A5  A9 01              lda    HIGH_BYTE #$100
+       01:C1A7  85 FD              sta    HIGH_BYTE <_cx
+                                   .endif
+       01:C1A9  20 F6 E4           jsr   load_vram
+  106                     
+  107                             ;GE
+  108  01:C1AC            .toto
+  109                             ;jmp    .toto
+  110                     
+  111  01:C1AC  4C C9 C0          jmp   .anim             ; and loop again and again
+  112                     
+  113                     ; ----
+  114                     ; the sprite data
+  115                     
+  116           0002              .bank MAIN_BANK+1
+  117           6000              .org  $6000
+  118  02:6000            ball:
+  119  02:6000                    .incspr "ball.pcx",0,0,2,2      ; ball A
+  120  02:6200                    .incspr "ball.pcx",32,0,2,2     ; ball B
+  121  02:6400            ball_colors:
+  122  02:6400  00 00             .defpal $000,$000,$000,$000,$000,$000,$000,$000,...
+       02:6402  00 00     
+       02:6404  00 00     
+       02:6406  00 00     
+       02:6408  00 00     
+       02:640A  00 00     
+       02:640C  00 00     
+       02:640E  00 00     
+       02:6410  00 00     
+       02:6412  91 00     
+       02:6414  DA 00     
+       02:6416  23 01     
+       02:6418  6C 01     
+       02:641A  B5 01     
+       02:641C  FE 01     
+       02:641E  FF 01     
+  124  02:6420            y_table:
+  125  02:6420  6B 00             .dw 107,107,108,109,110,111,112,113
+       02:6422  6B 00     
+       02:6424  6C 00     
+       02:6426  6D 00     
+       02:6428  6E 00     
+       02:642A  6F 00     
+       02:642C  70 00     
+       02:642E  71 00     
+  126  02:6430  72 00             .dw 114,115,116,117,118,119,120,122
+       02:6432  73 00     
+       02:6434  74 00     
+       02:6436  75 00     
+       02:6438  76 00     
+       02:643A  77 00     
+       02:643C  78 00     
+       02:643E  7A 00     
+  127  02:6440  7B 00             .dw 123,124,126,127,129,130,132,133
+       02:6442  7C 00     
+       02:6444  7E 00     
+       02:6446  7F 00     
+       02:6448  81 00     
+       02:644A  82 00     
+       02:644C  84 00     
+       02:644E  85 00     
+  128  02:6450  87 00             .dw 135,137,139,141,143,145,147,149
+       02:6452  89 00     
+       02:6454  8B 00     
+       02:6456  8D 00     
+       02:6458  8F 00     
+       02:645A  91 00     
+       02:645C  93 00     
+       02:645E  95 00     
+  129  02:6460  98 00             .dw 152,155,158,161,164,168,172,177
+       02:6462  9B 00     
+       02:6464  9E 00     
+       02:6466  A1 00     
+       02:6468  A4 00     
+       02:646A  A8 00     
+       02:646C  AC 00     
+       02:646E  B1 00     
+  130  02:6470  B7 00             .dw 183,189,195,195,196,196
+       02:6472  BD 00     
+       02:6474  C3 00     
+       02:6476  C3 00     
+       02:6478  C4 00     
+       02:647A  C4 00     
+  131                     

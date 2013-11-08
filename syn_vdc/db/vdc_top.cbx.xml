@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<LOG_ROOT>
+	<PROJECT NAME="vdc_top">
+		<CBX_INST_ENTRY INSTANCE_NAME="|vdc_top|huc6260:VCE|scanline:sl1|altsyncram:altsyncram_component" CBX_FILE_NAME="altsyncram_0go1.tdf"/>
+		<CBX_INST_ENTRY INSTANCE_NAME="|vdc_top|huc6260:VCE|colram:ram|altsyncram:altsyncram_component" CBX_FILE_NAME="altsyncram_9q72.tdf"/>
+		<CBX_INST_ENTRY INSTANCE_NAME="|vdc_top|huc6260:VCE|scanline:sl0|altsyncram:altsyncram_component" CBX_FILE_NAME="altsyncram_0go1.tdf"/>
+		<CBX_INST_ENTRY INSTANCE_NAME="|vdc_top|huc6270:VDC|linebuf:bg_buf|altsyncram:altsyncram_component" CBX_FILE_NAME="altsyncram_5l52.tdf"/>
+		<CBX_INST_ENTRY INSTANCE_NAME="|vdc_top|huc6270:VDC|satram:sat|altsyncram:altsyncram_component" CBX_FILE_NAME="altsyncram_0oq1.tdf"/>
+	</PROJECT>
+</LOG_ROOT>

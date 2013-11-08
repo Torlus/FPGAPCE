@@ -1,0 +1,14 @@
+#set_time_format -unit ns -decimal_places 3
+#create_clock -period 20.000 [get_ports {CLOCK_50}]
+#derive_pll_clocks
+#set_output_delay -clock {pll|altpll_component|pll|clk[2]} 4.000 DRAM_CLK
+#set_output_delay -clock {pll|altpll_component|pll|clk[1]} 4.000 DRAM_ADDR[*]
+#set_output_delay -clock {pll|altpll_component|pll|clk[1]} 4.000 DRAM_WE_N
+#set_output_delay -clock {pll|altpll_component|pll|clk[1]} 4.000 DRAM_RAS_N
+#set_output_delay -clock {pll|altpll_component|pll|clk[1]} 4.000 DRAM_CAS_N
+#set_output_delay -clock {pll|altpll_component|pll|clk[1]} 4.000 DRAM_BA_0
+#set_output_delay -clock {pll|altpll_component|pll|clk[1]} 4.000 DRAM_BA_1
+#set_output_delay -clock {pll|altpll_component|pll|clk[1]} 4.000 DRAM_LDQM
+#set_output_delay -clock {pll|altpll_component|pll|clk[1]} 4.000 DRAM_UDQM
+#set_output_delay -clock {pll|altpll_component|pll|clk[1]} 4.000 DRAM_DQ[*]
+#set_input_delay -clock {pll|altpll_component|pll|clk[1]}  4.000 DRAM_DQ[*]
