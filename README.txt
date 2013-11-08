@@ -1,6 +1,6 @@
 ================================================================================
 fpgapce - a NEC PC-Engine/Turbografx-16 clone in a FPGA.
-Copyright (c) 2011 Gregory Estrade (greg@torlus.com)
+Copyright (c) 2011-2013 Gregory Estrade (greg@torlus.com)
 All rights reserved
 
 fpgapce is an attempt to clone the NEC PC-Engine/Turbografx-16 console in a FPGA.
